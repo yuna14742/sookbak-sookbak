@@ -1,19 +1,21 @@
 ---
 version: alpha
 name: Sookbak-design-analysis
-description: 다방(dabangapp.com)의 매물 카드·필터 칩·가격 표기·회색 위계를 가져오고, 화면 구조는 당근마켓처럼 앱을 열면 바로 매물 목록이 나오는 피드형으로 바꾼 숙명여대 학생 전용 자취방·하숙 앱 디자인 시스템. 흰 캔버스, 회색 1px 헤어라인, Pretendard 한 서체, 18px 굵은 가격, 그리고 선택·주요 액션에만 쓰는 숙명 Royal Blue(#003087) 하나. 그림자는 화면 위에 떠 있는 요소(글쓰기 버튼, 하단 바, 바텀시트)에만 쓴다.
+description: 다방(dabangapp.com)의 매물 카드·필터 칩·가격 표기·회색 위계를 가져오고, 화면 구조는 당근마켓처럼 앱을 열면 바로 매물 목록이 나오는 피드형으로 바꾼 숙명여대 학생 전용 자취방·하숙 앱 디자인 시스템. 흰 캔버스, 회색 1px 헤어라인, Pretendard 한 서체, 18px 굵은 가격, 그리고 숙명 Royal Light Blue(#0072CE)와 하늘색 틴트로만 만든 파랑·하늘 팔레트(주황·노랑 없음). 찜 아이콘은 하트 대신 눈송이 결정. 그림자는 화면 위에 떠 있는 요소(글쓰기 버튼, 하단 바, 바텀시트)에만 쓴다.
 
 colors:
-  primary: "#003087"
-  primary-hover: "#00449B"
-  primary-pressed: "#00205C"
-  primary-deep: "#00205C"
+  primary: "#0072CE"
+  primary-hover: "#0063B8"
+  primary-pressed: "#003087"
+  primary-deep: "#003087"
+  primary-ink: "#005BB0"
   accent: "#0072CE"
   accent-hover: "#005BB0"
-  primary-tint: "#EEF4FB"
-  primary-tint-strong: "#D6E4F5"
-  focus-ring: "#A9C8EC"
-  surface-selected: "#EEF4FB"
+  primary-tint: "#E8F4FD"
+  primary-tint-strong: "#CDE7FB"
+  sky: "#8FCBF5"
+  focus-ring: "#A9D4F5"
+  surface-selected: "#E8F4FD"
   ink: "#222222"
   ink-sub: "#434343"
   body: "#656565"
@@ -28,12 +30,9 @@ colors:
   surface-pearl: "#FAFAFA"
   surface-chip-open: "#EDEDED"
   surface-dark: "#222222"
-  highlight: "#FFB500"
-  highlight-tint: "#FFF4D6"
-  highlight-ink: "#7A5600"
-  like: "#FF7D01"
-  women-tint: "#FFF0E5"
-  women-ink: "#B34F00"
+  snowflake: "#2B8FE6"
+  women-tint: "#EEF0FF"
+  women-ink: "#3D4FC4"
   status-reserved: "#157A4A"
   status-done: "#656565"
   success: "#1A9E5C"
@@ -162,7 +161,7 @@ components:
     height: 36px
   filter-chip-applied:
     backgroundColor: "{colors.primary-tint}"
-    textColor: "{colors.primary}"
+    textColor: "{colors.primary-ink}"
     typography: "{typography.body-strong}"
     rounded: "{rounded.pill}"
   filter-reset-button:
@@ -212,7 +211,7 @@ components:
     height: 20px
   tag-verified:
     backgroundColor: "{colors.primary-tint}"
-    textColor: "{colors.primary}"
+    textColor: "{colors.primary-ink}"
     typography: "{typography.caption-strong}"
     rounded: "{rounded.xs}"
     padding: 0 6px
@@ -225,8 +224,8 @@ components:
     padding: 0 6px
     height: 20px
   tag-price-drop:
-    backgroundColor: "{colors.highlight-tint}"
-    textColor: "{colors.highlight-ink}"
+    backgroundColor: "{colors.primary-tint-strong}"
+    textColor: "{colors.primary-deep}"
     typography: "{typography.caption-strong}"
     rounded: "{rounded.xs}"
     padding: 0 6px
@@ -238,13 +237,13 @@ components:
     rounded: "{rounded.xs}"
     padding: 4px 8px
     height: 28px
-  like-toggle:
+  snowflake-toggle:
     backgroundColor: transparent
     textColor: "{colors.on-dark}"
     size: 24px
-  like-toggle-active:
+  snowflake-toggle-active:
     backgroundColor: transparent
-    textColor: "{colors.like}"
+    textColor: "{colors.snowflake}"
     size: 24px
   fab-write:
     backgroundColor: "{colors.primary}"
@@ -268,7 +267,7 @@ components:
     textColor: "{colors.ink}"
     typography: "{typography.micro}"
   unread-badge:
-    backgroundColor: "{colors.like}"
+    backgroundColor: "{colors.primary}"
     textColor: "{colors.on-dark}"
     typography: "{typography.micro}"
     rounded: "{rounded.pill}"
@@ -328,7 +327,7 @@ components:
     rounded: "{rounded.md}"
   button-primary-locked:
     backgroundColor: "{colors.primary-tint}"
-    textColor: "{colors.primary}"
+    textColor: "{colors.primary-ink}"
     typography: "{typography.body-strong}"
     rounded: "{rounded.md}"
   button-outline:
@@ -410,11 +409,13 @@ components:
 
 다방에서 가져오는 것은 **매물 카드의 정보 구성과 시각 언어**입니다. 가격만 18px 굵게, 나머지 정보는 14px 보통 굵기로 회색 단계만 바꿔 위계를 만들고, 흰 캔버스와 1px 회색 헤어라인으로 면을 나누며, 파랑은 "선택됨"과 "누를 수 있음"에만 씁니다. 화면 구조(상단 바, 분류 탭, 필터 칩 줄, 카드 피드, 떠 있는 글쓰기 버튼, 하단 탭 바)는 당근마켓 방식을 따릅니다.
 
-숙박숙박만의 요소는 세 가지입니다. (1) 다방 블루 `#326CF9` 자리에 숙명여대 공식 **Sookmyung Royal Blue `#003087`**. (2) 모든 거리를 "숙대 정문 도보 N분"처럼 캠퍼스 기준으로 표시. (3) **학생 인증 단계에 따라 버튼이 잠기는 UI**. 이메일 인증만 한 사용자는 매물을 구경하고 찜할 수 있지만, `매물 올리기`와 `채팅하기`를 누르면 학생증 인증 안내가 열립니다.
+숙박숙박만의 요소는 네 가지입니다. (1) 다방 블루 `#326CF9` 자리에 숙명여대 공식 **Sookmyung Royal Light Blue `#0072CE`**와 하늘색 틴트로 만든 **파랑·하늘 팔레트**. 주황·노랑은 쓰지 않습니다. (2) 모든 거리를 "숙대 정문 도보 N분"처럼 캠퍼스 기준으로 표시. (3) **학생 인증 단계에 따라 버튼이 잠기는 UI**. 이메일 인증만 한 사용자는 매물을 구경하고 찜할 수 있지만, `매물 올리기`와 `채팅하기`를 누르면 학생증 인증 안내가 열립니다. (4) 찜 아이콘은 하트 대신 **눈송이 결정** 모양입니다. 숙대생을 부르는 이름 "눈송이"에서 가져왔습니다.
 
 **Key Characteristics:**
 - 피드가 첫 화면입니다. 한 줄에 카드 하나, 무한 스크롤.
-- 하나의 블루(`{colors.primary}` — #003087)가 선택된 분류 탭, 적용된 필터, 주요 버튼, 글쓰기 버튼을 모두 담당합니다.
+- 하나의 블루(`{colors.primary}` — #0072CE)가 선택된 분류 탭, 적용된 필터, 주요 버튼, 글쓰기 버튼을 모두 담당하고, 배경은 하늘색 틴트(`{colors.primary-tint}` — #E8F4FD)로 부드럽게 받칩니다.
+- 색은 파랑·하늘 계열만 씁니다. 주황·노랑 강조색은 없습니다.
+- 찜은 하트가 아니라 눈송이 결정 아이콘(`{component.snowflake-toggle}`)입니다.
 - 서체는 Pretendard 하나, 굵기는 400과 700 두 단계.
 - 카드 안 위계는 회색 단계로: 가격 #222 → 정보 #656565 → 메타 #757575.
 - 거래 상태(`예약중`·`거래완료`)는 가격 앞 작은 배지로, 거래가능은 배지 없음.
@@ -428,12 +429,15 @@ components:
 > **숙명여대 색 출처:** [숙명여자대학교 UI 가이드 Color Scheme](https://www.sookmyung.ac.kr/kr/intro/ui.do). Royal Blue Pantone 287C / RGB 0·48·135, Royal Light Blue Pantone 285C / RGB 0·114·206.
 
 ### Brand & Accent
-- **Sookmyung Royal Blue** (`{colors.primary}` — #003087): 숙명여대 공식 메인 색. 다방의 `#326CF9`가 하던 일을 모두 맡습니다. 주요 버튼(`채팅하기`, `완료`, `적용하기`), 글쓰기 버튼, 선택된 분류 탭의 글자와 밑줄, 적용된 필터 칩, 슬라이더 트랙, 내 채팅 말풍선. 흰 배경 대비 11.85:1.
-- **Royal Blue Hover** (`{colors.primary-hover}` — #00449B): 데스크톱 호버. 공식 색 사이를 나눈 앱 전용 값입니다.
-- **Royal Blue Pressed / Deep** (`{colors.primary-pressed}`, `{colors.primary-deep}` — #00205C): 눌림 상태와 상세 미니 지도의 캠퍼스 마커. 다방이 `#0C1A53`을 쓰는 자리입니다.
-- **Sookmyung Royal Light Blue** (`{colors.accent}` — #0072CE): 숙명여대 공식 보조 색. 텍스트 링크, 카드의 "숙대 정문 도보 N분". 흰 배경 대비 4.89:1(AA).
-- **Primary Tint** (`{colors.primary-tint}` — #EEF4FB): 적용된 필터 칩, "숙대생 인증" 태그, 잠긴 버튼의 배경. 다방의 `#EEF8FF` 자리.
-- **Focus Ring** (`{colors.focus-ring}` — #A9C8EC): 키보드 포커스 외곽선 전용.
+- **Sookmyung Royal Light Blue** (`{colors.primary}` — #0072CE): 숙명여대 공식 색이자 앱의 메인 색. 다방의 `#326CF9`가 하던 일을 모두 맡습니다. 주요 버튼(`채팅하기`, `완료`, `적용하기`), 글쓰기 버튼, 선택된 분류 탭의 글자와 밑줄, 슬라이더 트랙, 내 채팅 말풍선, 안 읽은 수 배지. 남색보다 밝아 화면이 가볍고 귀엽게 보입니다. 흰 배경·흰 글자 대비 4.89:1(AA).
+- **Primary Hover** (`{colors.primary-hover}` — #0063B8): 데스크톱 호버. 앱 전용 값입니다.
+- **Sookmyung Royal Blue** (`{colors.primary-pressed}`, `{colors.primary-deep}` — #003087): 숙명여대 공식 메인 색. 눌림 상태, 로고 워드마크, 상세 미니 지도의 캠퍼스 마커, "가격 인하" 태그 글자. 다방이 `#0C1A53`을 쓰는 자리입니다.
+- **Primary Ink** (`{colors.primary-ink}` — #005BB0): 하늘색 틴트 배경 위의 글자 전용(적용된 필터 칩, "숙대생 인증" 태그, 잠긴 버튼). `#0072CE`는 틴트 위에서 4.37:1이라 한 단계 진한 파랑을 씁니다(6.02:1).
+- **Accent** (`{colors.accent}` — #0072CE): 텍스트 링크, 카드의 "숙대 정문 도보 N분". 메인 색과 같은 값입니다.
+- **Sky Tint** (`{colors.primary-tint}` — #E8F4FD): 적용된 필터 칩, "숙대생 인증" 태그, 잠긴 버튼, 선택된 행의 배경. 다방의 `#EEF8FF` 자리.
+- **Sky Tint Strong** (`{colors.primary-tint-strong}` — #CDE7FB): "가격 인하" 태그 배경, 진한 틴트가 필요할 때.
+- **Sky** (`{colors.sky}` — #8FCBF5): 일러스트, 빈 화면 그림, 눈송이 장식. 대비가 낮아 글자·아이콘 단독으로는 쓰지 않습니다.
+- **Focus Ring** (`{colors.focus-ring}` — #A9D4F5): 키보드 포커스 외곽선 전용.
 
 ### Surface
 - **Canvas** (`{colors.canvas}` — #FFFFFF): 상단 바, 피드, 카드, 상세, 하단 탭 바 등 거의 모든 면.
@@ -456,13 +460,13 @@ components:
 ### Status & Tags
 - **예약중** (`{colors.status-reserved}` — #157A4A): 흰 글자 배지(5.36:1). 성공 색 `#1A9E5C`는 흰 글자 대비가 3.4:1이라 배지에는 한 단계 진한 초록을 씁니다.
 - **거래완료** (`{colors.status-done}` — #656565): 흰 글자 배지. 카드 전체 글자도 `{colors.placeholder}`로 흐려집니다.
-- **Highlight** (`{colors.highlight}` — #FFB500, Sookmyung Royal Yellow): "가격 인하" 태그(`{colors.highlight-tint}` 배경 + `{colors.highlight-ink}` #7A5600 글자, 6.07:1), 일러스트 포인트.
-- **Like** (`{colors.like}` — #FF7D01, Sookmyung Royal Orange): 채워진 찜 하트, 안 읽은 채팅 수 배지 배경. 흰 배경 대비 2.57:1이라 흰 바탕 위 텍스트로는 쓰지 않습니다.
-- **Women Only** (`{colors.women-tint}` #FFF0E5 + `{colors.women-ink}` #B34F00): "여성전용" 태그(4.67:1).
+- **가격 인하** (`{colors.primary-tint-strong}` #CDE7FB + `{colors.primary-deep}` #003087): "가격 인하" 태그(9.26:1).
+- **Snowflake** (`{colors.snowflake}` — #2B8FE6): 찜한 눈송이 아이콘을 채우는 하늘빛 파랑. 흰 배경 대비 3.4:1로 아이콘 기준(3:1)을 넘습니다. 글자색으로는 쓰지 않습니다.
+- **Women Only** (`{colors.women-tint}` #EEF0FF + `{colors.women-ink}` #3D4FC4): "여성전용" 태그. 파랑 계열 안에서 인증 태그와 구분되도록 보랏빛이 살짝 도는 파랑을 씁니다(5.96:1).
 - **Success / Danger** (`{colors.success}` #1A9E5C, `{colors.danger}` #E5484D): 인증 완료 체크, 입력 오류, 신고.
 
 ### Brand Gradient
-**그라데이션은 쓰지 않습니다.** 다방도 UI에는 그라데이션 토큰이 없습니다. 다방 "플러스" 태그의 보라색(`#3E26FD`)이나 "새단장" 배지의 핑크(`#FF3478`) 같은 두 번째 강조색도 들이지 않고, 그 자리는 블루 틴트와 숙명 옐로 틴트로 대신합니다.
+**그라데이션은 쓰지 않습니다.** 다방도 UI에는 그라데이션 토큰이 없습니다. 다방 "플러스" 태그의 보라색(`#3E26FD`)이나 "새단장" 배지의 핑크(`#FF3478`) 같은 두 번째 강조색도 들이지 않고, 그 자리는 하늘색 틴트로 대신합니다. 숙명여대 공식 보조색인 Royal Yellow(`#FFB500`)와 Royal Orange(`#FF7D01`)도 파랑과 어울림이 맞지 않아 쓰지 않습니다.
 
 ## Typography
 
@@ -526,7 +530,7 @@ Pretendard는 무료 오픈 폰트이므로 `next/font/local`로 Pretendard Vari
 ├─────────────────────────────────┤
 │ ┌──────┐ 월세 500/45             │
 │ │ 112px│ 원룸 · 분리형             │
-│ │   ♡  │ 3층 · 20㎡ · 관리비 5만     │
+│ │   ❄  │ 3층 · 20㎡ · 관리비 5만     │
 │ └──────┘ 숙대 정문 도보 7분          │
 │          12월 20일부터             │
 │          [숙대생 인증] [여성전용]     │
@@ -582,7 +586,7 @@ Pretendard는 무료 오픈 폰트이므로 `next/font/local`로 Pretendard Vari
 다방은 버튼과 필터 칩을 2px로 각지게 쓰지만, 숙박숙박은 손가락으로 쓰는 모바일 피드이므로 버튼·썸네일 8px, 필터 칩 pill로 부드럽게 바꿨습니다.
 
 ### Photography Geometry
-- **피드 썸네일:** 112 × 112px 정사각형, `{rounded.md}`, `object-fit: cover`. 오른쪽 위 6px에 흰 하트(`{component.like-toggle}`). 사진이 없으면 `{colors.surface-soft}`에 회색 집 아이콘.
+- **피드 썸네일:** 112 × 112px 정사각형, `{rounded.md}`, `object-fit: cover`. 오른쪽 위 6px에 흰 눈송이 아이콘(`{component.snowflake-toggle}`). 사진이 없으면 `{colors.surface-soft}`에 회색 집 아이콘.
 - **상세 사진:** 화면 폭 꽉 차게 4:3, 좌우 스와이프, 오른쪽 아래 "1 / 8" 카운터. 탭하면 전체 화면.
 - **매물 올리기 사진:** 80px 정사각형 그리드, 첫 장에 "대표" 라벨, 3~10장.
 - 다방은 사진에 워터마크를 얹지만 숙박숙박은 넣지 않습니다.
@@ -595,7 +599,7 @@ Pretendard는 무료 오픈 폰트이므로 `next/font/local`로 Pretendard Vari
 
 **`location-selector`** — 기준 위치 선택. "숙대 정문 ⌄" `{typography.body-lg-strong}`. 누르면 바텀시트에서 숙대 정문 / 후문 / 숙대입구역 / 효창공원앞역 중 선택. 선택한 기준이 카드의 "도보 N분" 계산 기준이 됩니다.
 
-**`bottom-tab-bar`** — 높이 56px + safe area, 위 1px `{colors.divider-soft}`. 탭 네 개: 홈 · 찜 · 채팅 · 마이. 아이콘 24px 위 + 라벨 `{typography.micro}`. 선택 안 된 탭은 `{colors.placeholder}`, 선택된 탭은 `{component.bottom-tab-item-active}` — `{colors.ink}`에 채워진 아이콘. 채팅 탭 아이콘 오른쪽 위에 `{component.unread-badge}`(높이 16px, `{colors.like}` 배경, 흰 숫자).
+**`bottom-tab-bar`** — 높이 56px + safe area, 위 1px `{colors.divider-soft}`. 탭 네 개: 홈 · 찜 · 채팅 · 마이. 아이콘 24px 위 + 라벨 `{typography.micro}`. 선택 안 된 탭은 `{colors.placeholder}`, 선택된 탭은 `{component.bottom-tab-item-active}` — `{colors.ink}`에 채워진 아이콘. 찜 탭 아이콘은 눈송이 결정 모양입니다. 채팅 탭 아이콘 오른쪽 위에 `{component.unread-badge}`(높이 16px, `{colors.primary}` 배경, 흰 숫자).
 
 ### Category & Filters
 
@@ -613,7 +617,7 @@ Pretendard는 무료 오픈 폰트이므로 `next/font/local`로 Pretendard Vari
 | 쉐어하우스 | 쉐어하우스 전체 |
 
 **`filter-chip`** — 필터 칩 줄의 칩. 높이 36px, `{rounded.pill}`, 1px `{colors.hairline}`, 패딩 0 10px 0 12px, `{typography.body}` + 꺾쇠 아이콘. 칩 사이 8px, 가로 스크롤. 누르면 해당 항목이 펼쳐진 필터 바텀시트가 열립니다.
-- 적용됨: `{component.filter-chip-applied}` — 배경 `{colors.primary-tint}`, 테두리 `{colors.primary}`, 글자 `{colors.primary}` 700, 라벨이 값으로 바뀜("도보 10분 이내", "월세 50 이하") + ✕.
+- 적용됨: `{component.filter-chip-applied}` — 배경 `{colors.primary-tint}`, 테두리 `{colors.primary}`, 글자 `{colors.primary-ink}` 700, 라벨이 값으로 바뀜("도보 10분 이내", "월세 50 이하") + ✕.
 - 맨 앞에 `{component.filter-reset-button}` — 36px 원, 새로고침 아이콘. 적용된 필터가 있을 때만 보임.
 - 칩 순서: 가격 · 월세/전세 · 숙대까지 · 입주 가능일 · 여성전용 · 거래가능만.
 
@@ -638,7 +642,7 @@ Pretendard는 무료 오픈 폰트이므로 `next/font/local`로 Pretendard Vari
 7. 메타 줄 `{typography.caption}` `{colors.body-muted}` — "2시간 전 · 채팅 3 · 찜 12"
 
 - 거래완료: `{component.listing-card-done}` — 모든 글자 `{colors.placeholder}`, 썸네일 50% 불투명. 기본 정렬에서 목록 아래로 내려갑니다.
-- 카드 전체가 상세로 가는 링크, 하트만 따로 눌림.
+- 카드 전체가 상세로 가는 링크, 눈송이 찜 아이콘만 따로 눌림.
 
 **가격 표기 규칙** (PRD 8.3과 동일, 단위 만원)
 
@@ -654,13 +658,18 @@ Pretendard는 무료 오픈 폰트이므로 `next/font/local`로 Pretendard Vari
 
 **`status-badge-reserved` / `status-badge-done`** — 가격 앞 높이 20px 배지, `{rounded.xs}`, `{typography.caption-strong}` 흰 글자. `예약중`은 `{colors.status-reserved}`, `거래완료`는 `{colors.status-done}`. 거래가능은 배지 없음.
 
-**`tag-verified`** — "숙대생 인증". 다방 "플러스" 태그 자리. 높이 20px, 패딩 0 × 6px, `{rounded.xs}`, `{colors.primary-tint}` 배경, `{colors.primary}` 글자.
+**`tag-verified`** — "숙대생 인증". 다방 "플러스" 태그 자리. 높이 20px, 패딩 0 × 6px, `{rounded.xs}`, `{colors.primary-tint}` 배경, `{colors.primary-ink}` 글자.
 
 **`tag-women-only`** — "여성전용". `{colors.women-tint}` 배경, `{colors.women-ink}` 글자.
 
-**`tag-price-drop`** — "가격 인하". 가격을 내린 뒤 3일간. `{colors.highlight-tint}` 배경, `{colors.highlight-ink}` 글자.
+**`tag-price-drop`** — "가격 인하". 가격을 내린 뒤 3일간. `{colors.primary-tint-strong}` 배경, `{colors.primary-deep}` 글자.
 
-**`like-toggle`** — 썸네일 위 24px 하트. 기본은 흰 아웃라인 + 옅은 그림자, 찜하면 `{component.like-toggle-active}` — `{colors.like}`로 채움.
+**`snowflake-toggle`** — 찜 아이콘. 하트 대신 **눈송이 결정** 모양입니다.
+- 모양: 가지 6개짜리 눈 결정. 각 가지 끝에 작은 V자 곁가지 한 쌍, 가운데는 작은 육각형. 24 × 24px 캔버스, 선 굵기 1.75px, 선 끝은 둥글게(`stroke-linecap: round`). 선이 둥글고 가지가 짧아 날카롭지 않고 동글동글하게 보이도록 그립니다.
+- 기본: 사진 위에서는 흰 선 + `rgba(0, 0, 0, 0.24) 0 1px 2px` 그림자, 흰 배경 위(상세 하단 바, 찜 목록)에서는 `{colors.body}` 선.
+- 찜함: `{component.snowflake-toggle-active}` — 가운데 육각형과 가지 사이를 `{colors.snowflake}`로 채우고 흰 1px 테두리. 누를 때 크기 1 → 1.2 → 1로 0.2초 튀어 오릅니다.
+- 터치 영역 44 × 44px. 스크린 리더 이름은 "찜하기" / "찜 해제".
+- 숙명여대 공식 심볼마크도 눈 결정을 바탕으로 하지만, 학교 UI 가이드상 심볼 무단 사용·변형이 금지되므로 **학교 심볼을 따라 그리지 않고** 앱 전용으로 새로 그린 단순한 결정 모양을 씁니다.
 
 **`fab-write`** — 오른쪽 아래 떠 있는 `+ 매물 올리기`. 높이 52px, `{rounded.pill}`, `{colors.primary}` 배경, 흰 `{typography.body-lg-strong}`, 패딩 0 × 20px, Floating button 그림자. 피드를 아래로 스크롤하면 "+" 아이콘만 남는 52px 원으로 줄어듭니다.
 - 학생증 미인증: `{component.fab-write-locked}` — 모양은 같고 "+" 앞에 작은 자물쇠 아이콘. 누르면 `{component.verify-gate-sheet}`.
@@ -682,8 +691,8 @@ Pretendard는 무료 오픈 폰트이므로 `next/font/local`로 Pretendard Vari
 
 섹션 사이는 24px + 8px 회색 띠.
 
-**`detail-bottom-bar`** — 화면 아래 고정, 높이 72px + safe area, Bottom bar 그림자. 왼쪽 하트 + 세로 구분선 + 가격 요약(`{typography.body-lg-strong}`, 아래 줄 관리비 `{typography.caption}`), 오른쪽 `{component.button-primary}` "채팅하기"(폭 140px).
-- 학생증 미인증: 버튼이 `{component.button-primary-locked}` — `{colors.primary-tint}` 배경 + `{colors.primary}` 글자 + 자물쇠 아이콘 "인증하고 채팅하기". 누르면 `{component.verify-gate-sheet}`.
+**`detail-bottom-bar`** — 화면 아래 고정, 높이 72px + safe area, Bottom bar 그림자. 왼쪽 눈송이 찜 아이콘 + 세로 구분선 + 가격 요약(`{typography.body-lg-strong}`, 아래 줄 관리비 `{typography.caption}`), 오른쪽 `{component.button-primary}` "채팅하기"(폭 140px).
+- 학생증 미인증: 버튼이 `{component.button-primary-locked}` — `{colors.primary-tint}` 배경 + `{colors.primary-ink}` 글자 + 자물쇠 아이콘 "인증하고 채팅하기". 누르면 `{component.verify-gate-sheet}`.
 - 내 매물: 버튼 자리에 `{component.button-outline}` "채팅 3개 보기", 오른쪽 위 메뉴에 수정·상태 변경·삭제.
 
 ### Verification Gate
@@ -725,7 +734,7 @@ PRD 7.1의 권한표를 UI로 옮긴 부분입니다.
 **`button-primary`** — 주요 액션("채팅하기", "학생증 인증하기", "매물 128개 보기"). `{colors.primary}` 배경, 흰 `{typography.body-strong}`, 높이 52px, 패딩 0 × 16px, `{rounded.md}`. 다방 "문자문의"(56px, 2px)보다 낮고 둥글게 바꿨습니다.
 - 눌림: `{component.button-primary-pressed}` — `{colors.primary-pressed}`.
 - 비활성(입력이 덜 됨): `{component.button-primary-disabled}` — `{colors.divider-soft}` 배경, `{colors.placeholder}` 글자.
-- 잠김(인증 필요): `{component.button-primary-locked}` — `{colors.primary-tint}` 배경, `{colors.primary}` 글자, 자물쇠 아이콘. 비활성과 달리 **누를 수 있고** 인증 안내를 엽니다.
+- 잠김(인증 필요): `{component.button-primary-locked}` — `{colors.primary-tint}` 배경, `{colors.primary-ink}` 글자, 자물쇠 아이콘. 비활성과 달리 **누를 수 있고** 인증 안내를 엽니다.
 - 포커스: `outline: 2px solid {colors.focus-ring}; outline-offset: 2px`.
 
 **`button-outline`** — 보조 액션("초기화", "채팅 3개 보기"). 흰 배경, 1px `{colors.hairline}`, `{colors.ink}` `{typography.body-strong}`, 높이 44px, `{rounded.md}`.
@@ -755,8 +764,9 @@ PRD 7.1의 권한표를 UI로 옮긴 부분입니다.
 
 ### Do
 - 앱을 열면 바로 매물 피드를 보여 줍니다. 지도는 상세 안에서만.
-- 선택·주요 액션에는 `{colors.primary}`(Sookmyung Royal Blue #003087) 하나만 씁니다.
-- 숙명여대 공식 색(#003087, #0072CE, #FFB500, #FF7D01)은 HEX 그대로 씁니다. 학교 가이드가 색 임의 변경을 금지합니다.
+- 선택·주요 액션에는 `{colors.primary}`(Sookmyung Royal Light Blue #0072CE) 하나만 쓰고, 배경 강조는 하늘색 틴트로 합니다.
+- 숙명여대 공식 색 중 파랑 두 가지(#003087, #0072CE)만 HEX 그대로 씁니다. 학교 가이드가 색 임의 변경을 금지합니다.
+- 찜은 언제나 눈송이 결정 아이콘으로 표시합니다.
 - 피드 카드에서 18px/700은 가격에만 씁니다.
 - 가격은 PRD 8.3 표기 규칙 그대로 씁니다. 자유 입력 가격을 그대로 노출하지 않습니다.
 - 모든 카드에 "숙대 정문 도보 N분"을 넣습니다.
@@ -766,8 +776,9 @@ PRD 7.1의 권한표를 UI로 옮긴 부분입니다.
 
 ### Don't
 - 지도를 첫 화면이나 메인 탐색으로 두지 않습니다.
-- 두 번째 강조색을 들이지 않습니다. 다방의 보라 "플러스"나 핑크 "새단장" 대신 블루 틴트·옐로 틴트를 씁니다.
-- `{colors.placeholder}`(#979797)와 `{colors.like}`(#FF7D01)를 흰 바탕 위 본문 텍스트로 쓰지 않습니다.
+- 주황·노랑을 쓰지 않습니다. 숙명 Royal Yellow·Royal Orange, 다방의 보라 "플러스"·핑크 "새단장" 대신 하늘색 틴트를 씁니다.
+- 찜에 하트 아이콘을 쓰지 않습니다.
+- `{colors.placeholder}`(#979797), `{colors.snowflake}`(#2B8FE6), `{colors.sky}`(#8FCBF5)를 흰 바탕 위 본문 텍스트로 쓰지 않습니다.
 - 500·600 굵기를 쓰지 않습니다. 400과 700뿐입니다.
 - 잠긴 버튼을 숨기거나 회색 비활성처럼 보이게 만들지 않습니다. 비활성(`-disabled`)과 잠김(`-locked`)은 다른 상태입니다.
 - 작성자의 실명·학번, 매물의 정확한 주소·호수를 화면에 보여 주지 않습니다.
@@ -789,7 +800,7 @@ PRD 7.1의 권한표를 UI로 옮긴 부분입니다.
 ### Touch Targets
 - 최소 44 × 44px(PRD 11 접근성).
 - 필터 칩은 높이 36px이지만 위아래 4px 여백을 포함해 44px 터치 영역을 줍니다.
-- 썸네일 위 하트는 아이콘 24px, 터치 영역 44px.
+- 썸네일 위 눈송이 찜 아이콘은 24px, 터치 영역 44px.
 
 ### Collapsing Strategy
 - **하단 탭 바:** 모바일·태블릿 하단 → 데스크톱 상단 헤더 메뉴.
@@ -820,5 +831,7 @@ PRD 7.1의 권한표를 UI로 옮긴 부분입니다.
 - 입력 폼(매물 올리기, 인증)의 오류·검증 상태는 다방 웹에서 확인하지 않았습니다. `{colors.danger}`는 앱 전용 값입니다.
 - 관리자 화면(S14)은 이 문서에서 다루지 않습니다.
 - 다크 모드는 정의하지 않았습니다.
-- Primary 스케일 중 `#00449B`, `#00205C`, `#EEF4FB`, `#D6E4F5`, `#A9C8EC`, `#005BB0`은 숙명여대 공식 색 사이를 나눈 앱 전용 값입니다. 공식 값은 `#003087`, `#0072CE`, `#636569`, `#97999B`, `#FFB500`, `#FF7D01`, `#D9D9D6`입니다.
+- 파랑·하늘 팔레트 중 `#0063B8`, `#005BB0`, `#E8F4FD`, `#CDE7FB`, `#8FCBF5`, `#A9D4F5`, `#2B8FE6`, `#EEF0FF`, `#3D4FC4`는 숙명여대 공식 파랑 두 가지(`#003087`, `#0072CE`)를 기준으로 만든 앱 전용 값입니다. 공식 보조색 Royal Yellow(`#FFB500`)·Royal Orange(`#FF7D01`)는 사용자 요청(2026-11-25)으로 뺐습니다.
+- 눈송이 찜 아이콘은 아직 SVG로 그리지 않았습니다. 위 모양 설명이 기준이며, 구현할 때 24px 아이콘 하나를 만들어 기본·찜함 두 상태로 씁니다.
+- `{colors.status-reserved}`(초록)와 `{colors.danger}`(빨강)는 상태를 알리는 기능 색이라 파랑 계열로 바꾸지 않았습니다.
 - 지도 타일 자체의 색(네이버/카카오 지도)은 지도 제공사 스타일이라 토큰으로 다루지 않습니다.
