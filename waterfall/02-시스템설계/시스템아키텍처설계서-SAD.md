@@ -1,15 +1,16 @@
 # 시스템 아키텍처 설계서 (SAD - System Architecture Document)
 
-> 회원·게시글 서비스, 기술 선택과 수치는 작성 예시입니다. 프로젝트에서 승인한 요구사항·정책에 맞춰 선택하고 관련 RTM 행에 근거를 연결합니다.
+> 숙박숙박 Phase 2 시스템 설계 산출물이다. [SRS](../01-요구사항분석/요구사항명세서-SRS.md) v0.1이 Phase 2로 넘긴 결정(앱 구현 방식 DEC-010, 백엔드·DB·외부 API 업체, 요청 제한 수치)을 정하고, 시스템 경계와 구성 요소, 배포 구조, 비기능 요구사항 대응 방법을 정의한다. 근거는 SRS·[RTM](../01-요구사항분석/요구사항추적매트릭스-RTM.md)·[유스케이스 명세서](../01-요구사항분석/유스케이스명세서.md) v0.1, PRD.md v0.2, DESIGN.md, 저장소 AGENTS.md(Next.js), 2026-11-26 사용자 결정이다. 확인되지 않은 수치는 "초안", 결정되지 않은 사항은 "미결"로 표시했다.
 
 | 항목 | 내용 |
 |------|------|
-| **프로젝트명** | [프로젝트명] |
-| **문서 버전** | [v1.0] |
-| **작성일** | [YYYY-MM-DD] |
-| **작성자** | [작성자명 / 역할] |
-| **승인자** | [승인자명 / 역할] |
-| **문서 상태** | [초안 / 검토중 / 승인됨] |
+| **프로젝트명** | 숙박숙박 (SookbakSookbak) |
+| **문서 번호** | SAD-SOOKBAK-v0.1 |
+| **문서 버전** | v0.1 (초안) |
+| **작성일** | 2026-11-26 |
+| **작성자** | 이유나 (기획) / Claude (초안 작성 지원) |
+| **승인자** | 이유나 (기획 책임자) |
+| **문서 상태** | 초안 (G2 검토 전) |
 
 ---
 
@@ -17,39 +18,58 @@
 
 ### 1.1 목적
 
-본 문서는 [프로젝트명]의 시스템 아키텍처를 정의하고, 주요 기술적 결정 사항과 설계 원칙을 기술한다. 개발팀, 인프라팀, QA팀 등 프로젝트 이해관계자가 시스템의 전체 구조를 이해하고 일관된 방향으로 개발을 수행할 수 있도록 한다.
+본 문서는 숙박숙박 MVP(v1.0)의 소프트웨어 아키텍처를 정의한다. 숙박숙박은 숙명여대 학생이 방을 내놓는 판매 글과 방을 찾는 구함 글을 올리고, 눈송이로 찜하고, 글별 1:1 채팅으로 연결되는 모바일 우선 앱이다. 앱은 연결까지만 돕고 계약·송금은 앱 밖에서 당사자끼리 한다.
+
+이 문서는 다음 용도로 쓴다.
+
+- 구현(Claude Code 등 AI 보조 개발)이 따를 기술 스택, 코드 구조, 모듈 경계의 기준
+- [데이터베이스 설계서](데이터베이스설계서.md), [API 설계서](API설계서.md), [화면 설계서](화면설계서.md)가 공유하는 전제
+- API 키 같은 비밀 정보를 저장소에 올리지 않기 위한 관리 규칙 (4.5)
 
 ### 1.2 범위
 
-- 시스템 전체 아키텍처 구조 및 구성 요소
-- 기술 스택 선정 및 근거
-- 배포 아키텍처 및 인프라 구성
-- 비기능 요구사항에 대한 아키텍처 대응 전략
-- 시스템 간 통합 패턴
+| 구분 | 내용 |
+|------|------|
+| **대상 시스템** | 숙박숙박 모바일 앱(iOS·Android, 같은 코드로 웹), API 서버, 관리자 화면, 실시간 채팅, 예약 작업 |
+| **포함 범위** | SRS FR-001~FR-025 (P1, MVP) 구현에 필요한 아키텍처, NFR-001~012 대응 설계, 외부 연동(카카오 로그인, 메일, 푸시, 주소·지도, OCR) |
+| **제외 범위** | FR-026~029(P2·P3)의 상세 설계(확장 지점만 표시), 결제·송금·에스크로(어떤 버전에도 없음, EX-001), 지도 중심 탐색(EX-003), 다른 학교 확장(NFR-009) |
+| **대상 독자** | 기획 책임자(이유나), 구현 담당(AI 보조 개발 포함), 테스트·운영 담당 |
 
 ### 1.3 참조 문서
 
-| 문서명 | 버전 | 비고 |
+| 문서명 | 버전 | 위치 |
 |--------|------|------|
-| 요구사항 정의서 (SRS) | [v1.0] | 기능/비기능 요구사항 |
-| 프로젝트 계획서 | [v1.0] | 일정 및 리소스 |
-| [추가 참조 문서] | [버전] | [비고] |
+| 요구사항 명세서 (SRS) | v0.1 | [../01-요구사항분석/요구사항명세서-SRS.md](../01-요구사항분석/요구사항명세서-SRS.md) |
+| 요구사항 추적 매트릭스 (RTM) | v0.1 | [../01-요구사항분석/요구사항추적매트릭스-RTM.md](../01-요구사항분석/요구사항추적매트릭스-RTM.md) |
+| 유스케이스 명세서 | v0.1 | [../01-요구사항분석/유스케이스명세서.md](../01-요구사항분석/유스케이스명세서.md) |
+| 서비스 기획서 / 비즈니스 정책서 | v0.2 계열 | [../00-기획/](../00-기획/) |
+| PRD.md / DESIGN.md | v0.2 / 2026-11-26 | 저장소 루트 (PR #2 / PR #1) |
+| 데이터베이스 설계서 / API 설계서 / 화면 설계서 | v0.1 | 같은 폴더 |
+| AGENTS.md | - | 저장소 루트 (Next.js, `npm run dev`, `npm run build` 금지) |
 
 ### 1.4 변경 이력
 
 | 버전 | 날짜 | 작성자 | 변경 내용 |
 |------|------|--------|-----------|
-| v0.1 | [YYYY-MM-DD] | [작성자] | 초안 작성 |
-| v0.2 | [YYYY-MM-DD] | [작성자] | [변경 사항 요약] |
-| v1.0 | [YYYY-MM-DD] | [작성자] | 최종 승인 |
+| v0.1 | 2026-11-26 | 이유나 / Claude | 초안 작성. 앱 구현 방식(DEC-010)을 Next.js 웹앱 + Capacitor 앱 포장으로 제안(ADR-001, 사용자 확인 대기), 백엔드 Next.js Route Handlers + Supabase(ADR-002), 카카오 로그인 + 자체 토큰(ADR-003), 비밀 정보 관리 규칙(4.5) |
+| v1.0 | [미정] | 이유나 | G2 검토 후 최종 승인 |
 
 ### 1.5 용어 정의
 
 | 용어 | 정의 |
 |------|------|
-| [용어1] | [정의] |
-| [용어2] | [정의] |
-| [용어3] | [정의] |
+| SAD / ADR | 시스템 아키텍처 설계서 / 아키텍처 결정 기록 |
+| Next.js App Router | React 기반 풀스택 프레임워크. 화면(서버·클라이언트 컴포넌트)과 API(Route Handlers)를 한 저장소에서 만든다 |
+| Route Handler | Next.js의 서버 API 파일 (`src/app/api/v1/**/route.ts`) |
+| Capacitor | 웹앱을 iOS·Android 앱으로 포장하는 도구. 푸시 등 기기 기능을 플러그인으로 쓴다 |
+| PWA | 홈 화면에 설치할 수 있는 웹앱 |
+| Supabase | PostgreSQL·파일 저장소·실시간 연결·예약 작업을 제공하는 관리형 서비스 |
+| RLS | Row Level Security. DB가 행 단위로 접근을 막는 기능 |
+| FCM / APNs | Firebase Cloud Messaging / Apple Push Notification service (앱 푸시) |
+| OCR | 사진 속 글자 인식. 채팅 사진의 계좌번호 검사에 쓴다 |
+| 아웃박스 | 보낼 알림을 먼저 DB에 쓰고 별도 작업이 읽어 발송하는 방식 |
+| 환경 변수 | 코드 밖에서 주입하는 설정값. API 키 등 비밀값은 여기에만 둔다 |
+| 인증 단계 | `UNVERIFIED`(인증 전) → `EMAIL_VERIFIED`(학교 메일) → `MEMBER`(학생증, 정회원). [DB 설계서 4.2](데이터베이스설계서.md#42-열거형-enum-값-정의) |
 
 ---
 
@@ -59,174 +79,234 @@
 
 #### 선택된 아키텍처 스타일
 
-**[Layered Architecture / Microservices / Event-Driven / Hexagonal / 기타]**
+**모듈형 모놀리스 (Next.js 풀스택 단일 애플리케이션) + 관리형 백엔드 서비스(Supabase)**
+
+화면과 API를 하나의 Next.js 애플리케이션으로 만들고, 내부는 도메인 모듈(인증, 글, 채팅, 알림, 관리자 등)로 나눈다. DB·파일 저장소·실시간 연결·예약 작업은 Supabase 관리형 서비스를 쓴다. 같은 웹 코드를 Capacitor로 감싸 iOS·Android 앱을 만든다 (ADR-001).
 
 #### 후보 아키텍처 스타일 비교
 
-| 평가 항목 | Layered | Microservices | Event-Driven | Hexagonal |
-|-----------|---------|---------------|--------------|-----------|
-| 구현 복잡도 | 낮음 | 높음 | 중간 | 중간 |
-| 확장성 | 중간 | 높음 | 높음 | 중간 |
-| 유지보수성 | 중간 | 높음 | 중간 | 높음 |
-| 팀 역량 적합성 | [평가] | [평가] | [평가] | [평가] |
-| 배포 유연성 | 낮음 | 높음 | 높음 | 중간 |
-| 운영 복잡도 | 낮음 | 높음 | 중간 | 낮음 |
-| **종합 점수** | [점수] | [점수] | [점수] | [점수] |
+| 기준 | 모듈형 모놀리스 + 관리형 서비스 | 마이크로서비스 | 앱(React Native) + 별도 API 서버 |
+|------|------------------------------|---------------|----------------------------------|
+| 개발 속도 (수업 일정, 1인 + AI 보조) | 높음 | 낮음 | 중간 |
+| 저장소 AGENTS.md(Next.js)와 맞음 | 맞음 | 부분 | 부분 (API만 Next.js) |
+| 운영 복잡도 | 낮음 (Vercel + Supabase) | 높음 | 중간 |
+| 확장성 (가입자 1만 명, NFR-009) | 충분 (무상태 서버 수평 확장) | 높음 (과함) | 충분 |
+| 앱 푸시·앱 스토어 배포 | Capacitor로 가능 | 별도 | 가장 자연스러움 |
+| 비용 (무료~저비용, SRS 7.3) | 낮음 | 높음 | 중간 |
+| 코드 벌 수 | 1벌 | 여러 벌 | 2벌 (앱 + 서버) |
 
 #### 선택 근거
 
-- [근거 1: 예) 팀 규모와 역량을 고려했을 때 적합]
-- [근거 2: 예) 비기능 요구사항(확장성, 가용성)을 충족]
-- [근거 3: 예) 프로젝트 일정 내 구현 가능]
-- [근거 4: 예) 향후 확장 계획에 부합]
+1. 규모: 가입자 1,000명·글 300건(3개월 가설)은 단일 애플리케이션과 단일 DB로 충분하다. 서비스를 쪼갤 이유가 없다.
+2. 저장소 정합: 저장소 AGENTS.md가 Next.js 개발 서버(`npm run dev`)를 전제로 한다.
+3. 코드 한 벌: 화면·API·관리자 화면을 TypeScript 하나로 만들고, 같은 화면 코드를 웹과 앱에 쓴다. AI 보조 개발에서 맥락을 한곳에 둘 수 있다.
+4. 관리형 서비스: DB 백업, 파일 저장소, WebSocket 실시간 연결, 예약 작업을 직접 운영하지 않는다.
 
 ### 2.2 아키텍처 원칙
 
-| 원칙 | 설명 | 적용 방법 |
-|------|------|-----------|
-| 관심사 분리 (Separation of Concerns) | 각 계층/모듈은 단일 책임을 가짐 | [구체적 적용 방법] |
-| 느슨한 결합 (Loose Coupling) | 모듈 간 의존성 최소화 | [구체적 적용 방법] |
-| 높은 응집도 (High Cohesion) | 관련 기능을 하나의 모듈로 그룹화 | [구체적 적용 방법] |
-| DRY (Don't Repeat Yourself) | 코드 및 로직 중복 방지 | [구체적 적용 방법] |
-| SOLID 원칙 | 객체지향 설계 5원칙 준수 | [구체적 적용 방법] |
-| [추가 원칙] | [설명] | [적용 방법] |
+| 원칙 | 설명 |
+|------|------|
+| 서버가 최종 판단 | 권한(인증 단계), 필수 항목, 한도, 계좌번호 차단은 앱 화면에서 먼저 막더라도 서버 API에서 다시 검사한다 (BP-AUTH-003-2, AC-004-4, AC-015-4) |
+| 클라이언트는 DB에 직접 쓰지 않음 | 모든 쓰기는 API를 거친다. 클라이언트가 Supabase에 직접 하는 일은 채팅 메시지 실시간 구독(읽기) 하나뿐이다 |
+| 개인정보 최소 노출 | 응답 모델(DTO)을 따로 두어 실명·학번·학교 이메일·건물 주소·좌표가 다른 사용자 응답에 섞이지 않게 한다 (NFR-005, AC-010-1) |
+| 비밀값은 코드 밖 | API 키·DB 접속 정보·서명 키는 환경 변수와 배포 플랫폼 비밀 저장소에만 둔다. 저장소에는 `.env.example`(값 없는 이름 목록)만 올린다 (4.5) |
+| 설정값 분리 | 숙대 기준 위치, 동네 목록, 송금 감지 단어, 한도 값은 `app_settings`에서 읽는다 (NFR-009) |
+| 무상태 API | 서버 인스턴스에 세션을 저장하지 않는다. 요청 제한 카운터도 DB에 둔다 |
+| 장애 격리 | 외부 서비스(카카오, 메일, 푸시, OCR, 지도)가 실패해도 핵심 기능(목록·상세·채팅 저장)은 계속 동작하고 SRS 5.3의 대체 동작을 따른다 |
+| 디자인 토큰 | 화면 색·서체·간격은 DESIGN.md 토큰으로만 참조하고 HEX를 코드에 직접 쓰지 않는다 (NFR-011) |
 
 ### 2.3 시스템 컨텍스트 다이어그램
 
-시스템과 외부 시스템/액터 간의 관계를 나타낸다.
-
 ```mermaid
-flowchart TB
-    subgraph 외부 사용자
-        U1[일반 사용자]
-        U2[관리자]
+graph TB
+    subgraph "사용자"
+        GUEST["비회원·인증 전 회원<br/>(목록 구경)"]
+        EMAIL["이메일 인증 회원<br/>(상세·찜·검색·관심 조건)"]
+        MEMBER["정회원<br/>(글쓰기·채팅)"]
+        ADMIN["관리자<br/>(인증·신고 검수)"]
     end
 
-    subgraph 외부 시스템
-        EXT1[외부 인증 시스템<br/>OAuth Provider]
-        EXT2[이메일 서비스<br/>SMTP / SendGrid]
-        EXT3[결제 시스템<br/>PG사 API]
-        EXT4[외부 API<br/>서드파티 연동]
-        EXT5[모니터링 시스템<br/>DataDog / Grafana]
+    SYS["숙박숙박<br/>(앱·웹·API·관리자 화면)"]
+
+    subgraph "외부 시스템"
+        KAKAO["카카오 로그인<br/>(OAuth 2.0)"]
+        KLOCAL["카카오 로컬 API<br/>(주소 → 좌표·법정동)"]
+        POSTCODE["우편번호 검색 화면<br/>(주소 고르기)"]
+        KMAP["카카오 지도 SDK"]
+        MAIL["메일 발송 API"]
+        FCM["FCM → APNs<br/>(앱 푸시)"]
+        OCR["OCR API<br/>(채팅 사진 계좌번호)"]
+        STORE["앱 스토어<br/>(App Store·Google Play)"]
     end
 
-    SYS["[프로젝트명]<br/>시스템"]
-
-    U1 -->|웹/모바일 접속| SYS
-    U2 -->|관리 콘솔 접속| SYS
-    SYS -->|OAuth 2.0 인증| EXT1
-    SYS -->|알림 메일 발송| EXT2
-    SYS -->|결제 처리| EXT3
-    SYS -->|데이터 연동| EXT4
-    SYS -->|메트릭/로그 전송| EXT5
-
-    style SYS fill:#4A90D9,color:#fff,stroke:#2C5F8A
+    GUEST -->|HTTPS| SYS
+    EMAIL -->|HTTPS| SYS
+    MEMBER -->|HTTPS·WSS| SYS
+    ADMIN -->|HTTPS| SYS
+    SYS --> KAKAO
+    SYS --> KLOCAL
+    SYS --> MAIL
+    SYS --> FCM
+    SYS --> OCR
+    SYS -.->|앱 화면에서 직접| POSTCODE
+    SYS -.->|앱 화면에서 직접| KMAP
+    STORE -.->|앱 배포| SYS
 ```
+
+| 외부 시스템 | 용도 | 연동 방향 | 장애 시 동작 (SRS 5.3) |
+|-------------|------|-----------|------------------------|
+| 카카오 로그인 | 가입·로그인 (카카오 회원번호만 받음), 탈퇴 시 연결 끊기 | 서버 → 카카오 | 새 로그인만 안내 문구. 이미 로그인한 사용자는 숙박숙박 토큰으로 계속 이용 |
+| 카카오 로컬 API | 고른 주소의 좌표·법정동 코드 조회 | 서버 → 카카오 (REST 키는 서버에만) | 글쓰기 `완료` 비활성, 재시도 안내 |
+| 우편번호 검색 화면 | 주소 검색·선택 UI (키 불필요) | 앱 화면에 삽입 | 재시도 안내 |
+| 카카오 지도 SDK | 상세 대략 위치 지도 (원 + 숙대 위치) | 앱 화면 → 카카오 | 지도 대신 동네 이름·숙대 기준 위치 텍스트 |
+| 메일 발송 API | 학교 메일 인증번호, 재인증·만료·제재 안내 | 서버 → 메일 서비스 | "메일을 보내지 못했어요" 안내 |
+| FCM (→ APNs) | 앱 푸시 (iOS는 FCM이 APNs로 전달) | 서버 → FCM | 인앱 알림 목록에는 항상 남김 |
+| OCR API | 채팅 사진 속 계좌번호 검사 | 서버 → OCR | 사진은 보내고 "송금 요구" 신고로 보완 (초안) |
 
 ### 2.4 컨테이너 다이어그램
 
-시스템 내부의 주요 컨테이너(어플리케이션, 데이터 저장소 등)를 나타낸다.
-
 ```mermaid
-flowchart TB
-    subgraph 클라이언트
-        WEB[Web Application<br/>React / Vue / Angular<br/>SPA]
-        MOBILE[Mobile Application<br/>React Native / Flutter]
+graph TB
+    subgraph "사용자 기기"
+        APP["iOS·Android 앱<br/>(Capacitor 웹뷰 + 푸시 플러그인)"]
+        WEB["모바일 브라우저 / PWA"]
+        ADMINW["관리자 브라우저<br/>(데스크톱)"]
     end
 
-    subgraph 시스템 경계
-        GW[API Gateway<br/>Kong / AWS API Gateway<br/>라우팅, 인증, Rate Limiting]
-
-        subgraph 백엔드 서비스
-            API[API Server<br/>Node.js / Spring Boot / Django<br/>비즈니스 로직]
-            AUTH[Auth Service<br/>인증/인가 처리<br/>JWT 발급]
-            NOTI[Notification Service<br/>알림 처리<br/>이메일, 푸시]
-            FILE[File Service<br/>파일 업로드/다운로드<br/>리사이징]
-        end
-
-        subgraph 데이터 저장소
-            RDB[(Primary DB<br/>PostgreSQL / MySQL<br/>트랜잭션 데이터)]
-            CACHE[(Cache<br/>Redis<br/>세션, 캐시)]
-            SEARCH[(Search Engine<br/>Elasticsearch<br/>검색 인덱스)]
-            STORAGE[(Object Storage<br/>S3 / MinIO<br/>파일 저장)]
-        end
-
-        MQ[Message Queue<br/>RabbitMQ / Kafka<br/>비동기 처리]
+    subgraph "Vercel (서울 리전 icn1)"
+        NEXT["Next.js 애플리케이션<br/>화면(App Router) + API(/api/v1)<br/>+ 관리자 화면(/admin)"]
+        MW["미들웨어<br/>(토큰 확인·보안 헤더)"]
+        JOBS["내부 작업 API<br/>(/api/internal/jobs/*)"]
     end
 
-    WEB -->|HTTPS / REST| GW
-    MOBILE -->|HTTPS / REST| GW
-    GW --> API
-    GW --> AUTH
-    API --> RDB
-    API --> CACHE
-    API --> SEARCH
-    API --> MQ
-    AUTH --> RDB
-    AUTH --> CACHE
-    MQ --> NOTI
-    MQ --> FILE
-    FILE --> STORAGE
+    subgraph "Supabase (서울 리전 ap-northeast-2)"
+        PG[("PostgreSQL 15<br/>RLS·pg_trgm·pg_cron")]
+        ST[("Storage<br/>post-photos(공개)·chat-photos(공개, 추측 불가 경로)<br/>verification-docs(비공개)")]
+        RT["Realtime<br/>(WSS, 채팅 메시지 구독)"]
+        CRON["pg_cron + pg_net<br/>(매분·매일 작업 호출)"]
+    end
 
-    style GW fill:#E8A838,color:#fff
-    style API fill:#4A90D9,color:#fff
-    style AUTH fill:#4A90D9,color:#fff
-    style NOTI fill:#4A90D9,color:#fff
-    style FILE fill:#4A90D9,color:#fff
-    style RDB fill:#5BA85B,color:#fff
-    style CACHE fill:#D94A4A,color:#fff
+    APP -->|HTTPS| MW
+    WEB -->|HTTPS| MW
+    ADMINW -->|HTTPS| MW
+    MW --> NEXT
+    NEXT -->|SQL (서버 전용 키)| PG
+    NEXT -->|업로드·삭제| ST
+    APP <-->|WSS 구독| RT
+    WEB <-->|WSS 구독| RT
+    RT --> PG
+    CRON -->|HTTPS + CRON_SECRET| JOBS
+    JOBS --> PG
+    APP -->|사진 내려받기| ST
 ```
+
+| 컨테이너 | 책임 | 기술 | 통신 |
+|----------|------|------|------|
+| iOS·Android 앱 | 웹 화면을 앱으로 실행, 푸시 수신·토큰 등록, 사진 선택·카메라 | Capacitor 6, 플러그인 `@capacitor/push-notifications`, `@capacitor/camera` | HTTPS, WSS |
+| 모바일 웹 / PWA | 같은 화면을 브라우저에서 (앱 설치 전 구경, 공유 링크) | Next.js 화면 | HTTPS, WSS |
+| Next.js 애플리케이션 | 화면 렌더링, REST API, 권한 검사, 비즈니스 규칙, 외부 API 호출, 관리자 화면 | Next.js 15 App Router, TypeScript, Node.js 20 런타임 | HTTPS |
+| 미들웨어 | Access Token 확인 후 요청에 사용자 정보 첨부, 관리자 경로 차단, 보안 헤더 | Next.js Middleware | 내부 |
+| 내부 작업 API | 재인증·만료·자동 숨김·파기 배치, 푸시 발송, 관심 매물 묶음 발송 | Route Handlers (공개 경로 아님, `CRON_SECRET` 필요) | HTTPS |
+| PostgreSQL | 영속 데이터, 제약조건, RLS | Supabase Postgres 15 | TCP(SSL) |
+| Storage | 매물·채팅 사진(리사이즈본), 학생증 원본(비공개, 처리 즉시 삭제) | Supabase Storage + CDN | HTTPS |
+| Realtime | 채팅 메시지 실시간 전달 (DB 변경 구독, RLS 적용) | Supabase Realtime | WSS |
+| pg_cron | 정해진 시각에 내부 작업 API 호출 | pg_cron + pg_net | HTTPS |
 
 ### 2.5 컴포넌트 다이어그램
 
-API Server 내부의 주요 모듈/컴포넌트 구성을 나타낸다.
+Next.js 애플리케이션 내부 모듈 구성이다. 화면(Presentation) → API 라우트 → 서비스(도메인 모듈) → 데이터 접근 순으로만 호출한다.
 
 ```mermaid
-flowchart TB
-    subgraph API Server
-        subgraph Presentation Layer
-            CTRL[Controllers<br/>요청/응답 처리]
-            MW[Middleware<br/>인증, 로깅, 에러 처리]
-            VALID[Validators<br/>입력 검증]
-        end
-
-        subgraph Application Layer
-            UC[Use Cases<br/>비즈니스 유스케이스]
-            DTO[DTOs<br/>데이터 전송 객체]
-            MAPPER[Mappers<br/>객체 변환]
-        end
-
-        subgraph Domain Layer
-            ENT[Entities<br/>도메인 엔티티]
-            VO[Value Objects<br/>값 객체]
-            SVC[Domain Services<br/>도메인 로직]
-            REPO_IF[Repository Interfaces<br/>저장소 인터페이스]
-        end
-
-        subgraph Infrastructure Layer
-            REPO[Repositories<br/>데이터 접근 구현]
-            EXT_CL[External Clients<br/>외부 API 연동]
-            MSG[Message Publishers<br/>메시지 발행]
-            CACHE_CL[Cache Client<br/>캐시 접근]
-        end
+graph TB
+    subgraph "Presentation (src/app)"
+        PAGES["(main) 화면<br/>홈·상세·글쓰기·찜·채팅·마이"]
+        AUTHP["(auth) 화면<br/>카카오 시작·학교 메일·학생증"]
+        ADMINP["admin 화면<br/>인증·신고 대기열·제재"]
+        UI["components/ui<br/>DESIGN.md 컴포넌트"]
     end
 
-    CTRL --> MW --> VALID
-    CTRL --> UC
-    UC --> SVC
-    UC --> REPO_IF
-    SVC --> ENT
-    SVC --> VO
-    REPO_IF -.->|구현| REPO
-    UC --> EXT_CL
-    UC --> MSG
-    UC --> CACHE_CL
+    subgraph "API (src/app/api/v1)"
+        R["Route Handlers<br/>입력 검증(Zod)·응답 형식·오류 변환"]
+    end
 
-    style CTRL fill:#E8A838,color:#fff
-    style UC fill:#4A90D9,color:#fff
-    style ENT fill:#5BA85B,color:#fff
-    style REPO fill:#8B5CF6,color:#fff
+    subgraph "Domain Services (src/server/modules)"
+        AUTH["auth<br/>카카오 OAuth·토큰·세션"]
+        VER["verification<br/>학교 메일·학생증·재인증"]
+        POL["policy<br/>인증 단계별 권한 (FR-004)"]
+        POST["posts<br/>판매·구함·가격 표기·위치·상태"]
+        MEDIA["media<br/>사진 EXIF 제거·리사이즈"]
+        FAV["favorites"]
+        CHAT["chat<br/>채팅방·메시지·계좌번호 차단"]
+        MOD["moderation<br/>차단·신고·제재"]
+        NOTI["notifications<br/>아웃박스·묶음·야간 규칙"]
+        MATCH["interest<br/>관심 조건 매칭"]
+        SET["settings<br/>app_settings 캐시"]
+        AUDIT["audit"]
+        RL["rate-limit"]
+    end
+
+    subgraph "Infrastructure (src/server/infra)"
+        DB["db<br/>Supabase 서버 클라이언트"]
+        STG["storage"]
+        KAK["kakao<br/>OAuth·로컬 API"]
+        MAILC["mail"]
+        PUSHC["push (FCM)"]
+        OCRC["ocr"]
+    end
+
+    PAGES --> R
+    AUTHP --> R
+    ADMINP --> R
+    R --> POL
+    R --> AUTH
+    R --> VER
+    R --> POST
+    R --> CHAT
+    R --> FAV
+    R --> MOD
+    R --> NOTI
+    POST --> MEDIA
+    POST --> MATCH
+    POST --> NOTI
+    CHAT --> MEDIA
+    CHAT --> OCRC
+    CHAT --> NOTI
+    MATCH --> NOTI
+    VER --> MAILC
+    VER --> STG
+    MEDIA --> STG
+    NOTI --> PUSHC
+    NOTI --> MAILC
+    AUTH --> KAK
+    POST --> KAK
+    AUTH --> DB
+    VER --> DB
+    POST --> DB
+    CHAT --> DB
+    FAV --> DB
+    MOD --> DB
+    NOTI --> DB
+    MATCH --> DB
+    SET --> DB
+    AUDIT --> DB
+    RL --> DB
 ```
+
+| 모듈 | 책임 | 관련 FR | 핵심 규칙 |
+|------|------|---------|-----------|
+| `auth` | 카카오 인가 코드 교환, 회원 조회·가입, Access/Refresh 토큰 발급·로테이션, 로그아웃, 탈퇴(카카오 연결 끊기) | FR-001, FR-002 | 카카오 토큰 저장 안 함 |
+| `verification` | 학교 메일 인증번호 발송·확인·잠금, 학생증 제출, 관리자 승인·반려(원본 즉시 삭제), 재인증 일정 | FR-001, FR-003, FR-005, FR-019 | 상태 전이는 이 모듈만 |
+| `policy` | 사용자 상태 → 허용 동작 판단, 403 응답에 `requiredLevel` | FR-004 | 화면·API 공통 권한 표 하나 |
+| `posts` | 판매·구함 CRUD, 분류별 검증, 가격 계산·표기 문자열, 위치(동네·숙대 기준 위치·표시 중심), 거래 상태, 한도, 임시 저장, 조회 수 | FR-006~013, FR-024 | 주소·좌표는 응답에 넣지 않음 |
+| `media` | 사진 업로드: 형식·크기 검사, EXIF 제거, 목록용·상세용 WebP 생성 | FR-007, FR-015 | `sharp`는 메타데이터를 기본으로 지움 |
+| `favorites` | 찜·해제·목록, 찜 수 갱신 | FR-014 | 자기 글 찜 불가 |
+| `chat` | 채팅방 열기, 메시지 저장, 계좌번호 차단(텍스트 정규식 + 사진 OCR), 송금 경고 표시, 읽음 | FR-015 | 차단된 내용은 저장 안 함 |
+| `moderation` | 차단, 신고(3건 자동 숨김), 관리자 신고 처리·글 숨김·복구·제재 | FR-016, FR-018, FR-019 | |
+| `notifications` | 알림 행 생성(아웃박스), 설정·야간·묶음 규칙, FCM 발송, 실패 토큰 정리 | FR-020 | 인앱 목록에는 항상 남김 |
+| `interest` | 관심 조건 CRUD, 글 공개·가격 인하 시 매칭 | FR-021 | 같은 글 1회, 10분 3건 묶음 |
+| `settings` | `app_settings` 읽기(1분 메모리 캐시)·관리자 수정 | FR-010-5 | |
+| `audit` | 감사 로그 기록 | NFR-006 | 토큰·인증번호·학번 원문 금지 |
+| `rate-limit` | 사용자·IP별 요청 제한 | NFR-004 | API 설계서 7장 수치 |
 
 ---
 
@@ -234,103 +314,109 @@ flowchart TB
 
 ### 3.1 선정 기준 매트릭스
 
-각 기술은 아래 기준으로 평가한다 (1~5점 척도).
-
-| 평가 항목 | 가중치 | 설명 |
-|-----------|--------|------|
-| 성능 (Performance) | [20%] | 처리 속도, 동시 접속 처리 능력 |
-| 생태계 (Ecosystem) | [20%] | 라이브러리, 프레임워크, 도구 풍부도 |
-| 학습 곡선 (Learning Curve) | [15%] | 팀원들의 습득 용이성 |
-| 라이선스 (License) | [10%] | 상용 사용 가능 여부, 비용 |
-| 커뮤니티 (Community) | [15%] | 활성도, 문서 품질, 지원 |
-| 안정성 (Stability) | [10%] | 프로덕션 검증 수준, 버그 빈도 |
-| 팀 역량 (Team Fit) | [10%] | 현재 팀의 경험 및 숙련도 |
+| 기준 | 가중치 | 설명 |
+|------|--------|------|
+| 요구사항 충족 | 30% | 앱 푸시(NFR-003·FR-021), 실시간 채팅 1초(NFR-001), 앱 스토어 배포, 모바일 우선 |
+| 개발 생산성 | 25% | 1인 + AI 보조 개발, 수업 일정 (DEC-006) |
+| 저장소·기존 결정 정합 | 15% | AGENTS.md(Next.js, TypeScript 우선) |
+| 비용 | 15% | 무료 또는 저비용 관리형 서비스 우선 (SRS 7.3) |
+| 운영 부담 | 10% | 서버·DB를 직접 운영하지 않음 |
+| 생태계·자료 | 5% | 문서·예제가 많아 AI 보조 개발에 유리 |
 
 ### 3.2 프론트엔드 기술 선정
 
 #### 선정 결과
 
-| 영역 | 선정 기술 | 버전 | 선정 근거 |
-|------|-----------|------|-----------|
-| Framework | [React / Vue / Angular] | [버전] | [근거] |
-| 상태 관리 | [Redux / Zustand / Pinia] | [버전] | [근거] |
-| 스타일링 | [Tailwind CSS / styled-components / CSS Modules] | [버전] | [근거] |
-| 빌드 도구 | [Vite / Webpack / Turbopack] | [버전] | [근거] |
-| 테스트 | [Jest / Vitest / Cypress] | [버전] | [근거] |
-| HTTP 클라이언트 | [Axios / fetch / ky] | [버전] | [근거] |
-| 라우팅 | [React Router / Vue Router] | [버전] | [근거] |
+| 항목 | 선정 기술 | 버전 | 비고 |
+|------|-----------|------|------|
+| 프레임워크 | Next.js (App Router) | 15.x | 화면 + API 한 저장소 |
+| UI 라이브러리 | React | 19.x | Next.js 15 기본 |
+| 언어 | TypeScript | 5.x | AGENTS.md 3장 |
+| 스타일 | Tailwind CSS (DESIGN.md 토큰을 테마로 등록) | 4.x | 토큰 외 임의 HEX 금지. 컴포넌트별 스타일은 같은 폴더에 |
+| 서버 데이터 | TanStack Query | 5.x | 목록 캐시·무한 스크롤·재시도(1·2·4초, FR-025) |
+| 폼 | React Hook Form + Zod | 7.x / 3.x | 클라이언트·서버가 같은 Zod 스키마 공유 |
+| 앱 포장 | Capacitor | 6.x | iOS·Android, 푸시·카메라 플러그인 |
+| 실시간 | `@supabase/supabase-js` Realtime | 2.x | 채팅 구독만 |
+| 지도 | 카카오 지도 JavaScript SDK | - | 상세 대략 위치 (도메인 제한 키) |
+| 서체 | Pretendard (자체 호스팅, 400·700) | - | DESIGN.md |
+| 테스트 | Vitest + Testing Library, Playwright(E2E) | - | `npm run test` |
 
 #### 평가 상세
 
-| 평가 항목 | [후보1] | [후보2] | [후보3] |
-|-----------|---------|---------|---------|
-| 성능 | [점수] | [점수] | [점수] |
-| 생태계 | [점수] | [점수] | [점수] |
-| 학습 곡선 | [점수] | [점수] | [점수] |
-| 라이선스 | [점수] | [점수] | [점수] |
-| 커뮤니티 | [점수] | [점수] | [점수] |
-| 안정성 | [점수] | [점수] | [점수] |
-| 팀 역량 | [점수] | [점수] | [점수] |
-| **가중 합계** | **[총점]** | **[총점]** | **[총점]** |
+| 기준 | Next.js 웹앱 + Capacitor | React Native (Expo) | Flutter |
+|------|-------------------------|---------------------|---------|
+| 요구사항 충족 (30%) | 4 — 앱 푸시·스토어 배포 가능, 웹뷰라 네이티브보다 약간 느림 | 5 | 5 |
+| 개발 생산성 (25%) | 5 — 화면·API 한 벌, 웹 개발 도구 그대로 | 4 | 3 (Dart) |
+| 저장소 정합 (15%) | 5 — AGENTS.md Next.js | 2 | 1 |
+| 비용 (15%) | 5 | 5 | 5 |
+| 운영 부담 (10%) | 4 — 웹 배포만으로 앱 화면도 갱신 | 3 — 스토어 심사·OTA 관리 | 3 |
+| 생태계 (5%) | 5 | 5 | 4 |
+| **가중 합계** | **4.65** | 4.05 | 3.6 |
 
 ### 3.3 백엔드 기술 선정
 
 #### 선정 결과
 
-| 영역 | 선정 기술 | 버전 | 선정 근거 |
-|------|-----------|------|-----------|
-| Language | [TypeScript / Java / Python / Go] | [버전] | [근거] |
-| Framework | [NestJS / Spring Boot / Django / Gin] | [버전] | [근거] |
-| ORM | [TypeORM / Prisma / JPA / SQLAlchemy] | [버전] | [근거] |
-| 인증 | [Passport.js / Spring Security / 자체 구현] | [버전] | [근거] |
-| 테스트 | [Jest / JUnit / pytest] | [버전] | [근거] |
-| API 문서화 | [Swagger / OpenAPI / Redoc] | [버전] | [근거] |
-| 로깅 | [Winston / Log4j / structlog] | [버전] | [근거] |
+| 항목 | 선정 기술 | 버전 | 비고 |
+|------|-----------|------|------|
+| 런타임 | Node.js | 20 LTS | Vercel Node.js 런타임 (사진 처리 `sharp` 사용을 위해 Edge 런타임은 쓰지 않음) |
+| 프레임워크 | Next.js Route Handlers | 15.x | `/api/v1/*` REST |
+| 입력 검증 | Zod | 3.x | 요청 스키마 = 화면 폼 스키마 |
+| DB 접근 | `@supabase/supabase-js` (서버 전용 키) + SQL 함수(RPC) | 2.x | 트랜잭션이 필요한 작업(글 등록 한도, 신고 자동 숨김, 찜 수)은 Postgres 함수로 |
+| 토큰 | `jose` (JWT 서명·검증) | 5.x | HS256, Supabase JWT 비밀키로 서명 (ADR-003) |
+| 이미지 처리 | `sharp` | 0.33.x | EXIF 제거, WebP 리사이즈 |
+| 메일 | Resend API (초안) | - | 학교 메일 도착 확인 필요 (DEP-001) |
+| 푸시 | Firebase Admin SDK (FCM HTTP v1) | 12.x | iOS는 APNs 키를 Firebase에 등록 |
+| OCR | Google Cloud Vision `TEXT_DETECTION` (초안) | - | 한국어 지원, 월 1,000장 무료 구간. 대안 네이버 CLOVA OCR |
+| 오류 추적 | Sentry (무료 플랜) | - | 개인정보 마스킹 설정 |
 
 #### 평가 상세
 
-| 평가 항목 | [후보1] | [후보2] | [후보3] |
-|-----------|---------|---------|---------|
-| 성능 | [점수] | [점수] | [점수] |
-| 생태계 | [점수] | [점수] | [점수] |
-| 학습 곡선 | [점수] | [점수] | [점수] |
-| 라이선스 | [점수] | [점수] | [점수] |
-| 커뮤니티 | [점수] | [점수] | [점수] |
-| 안정성 | [점수] | [점수] | [점수] |
-| 팀 역량 | [점수] | [점수] | [점수] |
-| **가중 합계** | **[총점]** | **[총점]** | **[총점]** |
+| 기준 | Next.js Route Handlers + Supabase | NestJS 서버 + PostgreSQL 직접 운영 | Firebase (Firestore + Functions) |
+|------|----------------------------------|-----------------------------------|----------------------------------|
+| 요구사항 충족 | 5 — 관계형 제약·부분 인덱스로 한도·중복 정책 표현, Realtime 채팅 | 5 | 3 — 관계·유니크 제약·복합 필터가 약함 |
+| 개발 생산성 | 5 — 화면과 같은 저장소 | 3 | 4 |
+| 저장소 정합 | 5 | 2 | 3 |
+| 비용 | 5 — 무료로 시작, 운영 Pro 월 25달러 | 3 — 서버 상시 비용 | 4 |
+| 운영 부담 | 5 | 2 | 5 |
+| **결론** | **채택** | 불채택 | 불채택 |
 
 ### 3.4 데이터베이스 기술 선정
 
-| 영역 | 선정 기술 | 버전 | 선정 근거 |
-|------|-----------|------|-----------|
-| Primary DB | [PostgreSQL / MySQL / MariaDB] | [버전] | [근거] |
-| Cache | [Redis / Memcached] | [버전] | [근거] |
-| Search Engine | [Elasticsearch / OpenSearch / Meilisearch] | [버전] | [근거 또는 N/A] |
-| Message Queue | [RabbitMQ / Apache Kafka / SQS] | [버전] | [근거 또는 N/A] |
-| Object Storage | [AWS S3 / MinIO / GCS] | [버전] | [근거] |
+| 항목 | 선정 기술 | 비고 |
+|------|-----------|------|
+| 주 DB | PostgreSQL 15 (Supabase, 서울) | [DB 설계서](데이터베이스설계서.md) |
+| 검색 | PostgreSQL `pg_trgm` | 글 수백~수천 건 규모라 별도 검색 엔진 불필요 |
+| 캐시 | 별도 캐시 서버 없음 | 목록 응답은 CDN·메모리 캐시 짧게(6.1). Redis는 NFR-002 미달 시 검토 |
+| 파일 | Supabase Storage + CDN | 공개 버킷(사진 리사이즈본), 비공개 버킷(학생증 원본) |
+| 실시간 | Supabase Realtime | 채팅 메시지 INSERT 구독, RLS로 참여자만 |
+| 예약 작업 | pg_cron + pg_net | Vercel 무료 플랜 cron은 하루 1회 제한이라 매분 작업에 쓰지 않음 |
 
 ### 3.5 인프라 기술 선정
 
-| 영역 | 선정 기술 | 버전 | 선정 근거 |
-|------|-----------|------|-----------|
-| 클라우드 | [AWS / GCP / Azure / 온프레미스] | - | [근거] |
-| 컨테이너 | [Docker / Podman] | [버전] | [근거] |
-| 오케스트레이션 | [Kubernetes / ECS / Docker Compose] | [버전] | [근거] |
-| CI/CD | [GitHub Actions / GitLab CI / Jenkins] | - | [근거] |
-| IaC | [Terraform / Pulumi / CloudFormation] | [버전] | [근거] |
-| 모니터링 | [Grafana + Prometheus / DataDog / CloudWatch] | - | [근거] |
-| 로그 관리 | [ELK Stack / Loki / CloudWatch Logs] | - | [근거] |
+| 항목 | 선정 기술 | 비고 |
+|------|-----------|------|
+| 호스팅 | Vercel (Next.js), 함수 리전 서울 `icn1` | GitHub 연동 자동 배포, PR마다 미리보기 URL |
+| DB·저장소·실시간 | Supabase (서울 `ap-northeast-2`) | 개발 프로젝트(무료) / 운영 프로젝트(Pro 권장, DB-Q3 미결) |
+| 앱 빌드 | Capacitor + Xcode / Android Studio | 앱 스토어 개발자 계정 필요 (Apple 연간, Google 1회, SRS 7.3) |
+| CI/CD | GitHub Actions + Vercel | 4.3 |
+| 비밀 정보 저장 | Vercel 환경 변수(암호화), GitHub Actions Secrets, Supabase 대시보드 | 4.5 |
+| 모니터링 | Vercel 로그·Analytics, Sentry, Supabase 대시보드(쿼리·연결) | 6.4 |
+| 도메인 | 미결 | 예: `sookbak.app` (API는 같은 도메인 `/api/v1`) |
 
 ### 3.6 대안 기술 및 불채택 사유
 
-| 영역 | 불채택 기술 | 불채택 사유 |
-|------|-------------|-------------|
-| 프론트엔드 | [기술명] | [사유: 예) 팀 경험 부족, 생태계 미성숙] |
-| 백엔드 | [기술명] | [사유] |
-| DB | [기술명] | [사유] |
-| 인프라 | [기술명] | [사유] |
-| [추가] | [기술명] | [사유] |
+| 대안 기술 | 영역 | 불채택 사유 |
+|-----------|------|-------------|
+| React Native (Expo) | 앱 | 품질은 가장 좋지만 화면 코드가 Next.js와 따로 생겨 두 벌이 된다. 수업 일정·1인 개발에 부담 (ADR-001 대안) |
+| PWA 단독 | 앱 | iOS는 홈 화면에 추가해야 웹 푸시를 받을 수 있어 관심 매물 알림(FR-021)·채팅 알림이 약해진다. 앱 스토어 검색 노출도 없다 |
+| Supabase Auth의 카카오 로그인 | 인증 | 카카오에서 이메일·프로필 동의 항목을 요구하는 구성이 기본이라 "카카오 회원번호만 받는다"(FR-001-2) 원칙과 맞추기 어렵고, 인증 단계(UNVERIFIED~MEMBER) 판단을 우리 DB가 해야 한다. 자체 토큰 발급으로 대체 (ADR-003) |
+| Socket.IO 자체 서버 | 채팅 | Vercel 함수는 장시간 연결을 유지할 수 없어 별도 서버가 필요하다. Supabase Realtime으로 대체 (ADR-004) |
+| Elasticsearch / OpenSearch | 검색 | 데이터가 작아 과하다. `pg_trgm`으로 충분 |
+| Redis (Upstash) | 캐시·요청 제한 | 외부 서비스·키가 하나 더 늘어난다. MVP는 DB 카운터로 충분 |
+| AWS (ECS·RDS·S3) | 인프라 | 설정·비용·운영 부담이 크다 |
+| 행정안전부 도로명주소 API | 주소 | 좌표 변환에 별도 API가 필요하다. 카카오 로컬 API 하나로 좌표·법정동을 함께 받는다 |
+| 네이버 지도 | 지도 | 카카오 로그인·로컬 API와 같은 개발자 계정으로 관리하려고 카카오 지도 선택. 기능상 차이는 없음 |
 
 ---
 
@@ -339,185 +425,186 @@ flowchart TB
 ### 4.1 배포 다이어그램
 
 ```mermaid
-flowchart TB
-    subgraph 인터넷
-        USER[사용자]
-        CDN[CDN<br/>CloudFront / Cloudflare]
+graph TB
+    subgraph "개발자"
+        DEV["로컬<br/>npm run dev + supabase start"]
+        GH["GitHub<br/>yuna14742/sookbak-sookbak"]
     end
 
-    subgraph "클라우드 환경 [AWS / GCP / 온프레미스]"
-        subgraph "Public Subnet"
-            ALB[Application Load Balancer<br/>L7 로드 밸런서]
-            WAF[WAF<br/>웹 방화벽]
-        end
-
-        subgraph "Private Subnet - Application"
-            subgraph "Container Cluster [ECS / K8s]"
-                APP1[API Server #1<br/>컨테이너]
-                APP2[API Server #2<br/>컨테이너]
-                APP3[Worker #1<br/>비동기 처리]
-            end
-        end
-
-        subgraph "Private Subnet - Data"
-            DB_PRIMARY[(Primary DB<br/>PostgreSQL)]
-            DB_REPLICA[(Read Replica<br/>PostgreSQL)]
-            REDIS[(Redis Cluster<br/>캐시/세션)]
-            MQ_SVC[Message Queue<br/>RabbitMQ / SQS]
-        end
-
-        subgraph "Storage"
-            S3_BUCKET[(Object Storage<br/>S3 / GCS)]
-        end
-
-        subgraph "Monitoring"
-            MON[모니터링<br/>Grafana + Prometheus]
-            LOG[로그 수집<br/>ELK / Loki]
-            ALERT[알림<br/>PagerDuty / Slack]
-        end
+    subgraph "GitHub Actions"
+        CI["CI<br/>lint·typecheck·test·비밀값 검사"]
+        MIG["DB 마이그레이션<br/>(수동 승인)"]
     end
 
-    USER -->|HTTPS| CDN
-    CDN -->|정적 자산| S3_BUCKET
-    CDN -->|API 요청| WAF
-    WAF --> ALB
-    ALB --> APP1
-    ALB --> APP2
-    APP1 --> DB_PRIMARY
-    APP1 --> DB_REPLICA
-    APP1 --> REDIS
-    APP1 --> MQ_SVC
-    APP2 --> DB_PRIMARY
-    APP2 --> DB_REPLICA
-    APP2 --> REDIS
-    MQ_SVC --> APP3
-    APP3 --> DB_PRIMARY
-    DB_PRIMARY -->|복제| DB_REPLICA
-    APP1 --> MON
-    APP2 --> MON
-    MON --> ALERT
+    subgraph "Vercel"
+        PREV["Preview 배포<br/>(PR마다 URL)"]
+        PROD["Production 배포<br/>(main, 서울 icn1)"]
+    end
 
-    style ALB fill:#E8A838,color:#fff
-    style APP1 fill:#4A90D9,color:#fff
-    style APP2 fill:#4A90D9,color:#fff
-    style APP3 fill:#4A90D9,color:#fff
-    style DB_PRIMARY fill:#5BA85B,color:#fff
-    style DB_REPLICA fill:#5BA85B,color:#fff
-    style REDIS fill:#D94A4A,color:#fff
+    subgraph "Supabase"
+        SBDEV[("개발 프로젝트<br/>(무료)")]
+        SBPROD[("운영 프로젝트<br/>(서울, Pro 권장)")]
+    end
+
+    subgraph "앱 스토어"
+        IOS["App Store<br/>(TestFlight)"]
+        AND["Google Play<br/>(내부 테스트)"]
+    end
+
+    DEV -->|push / PR| GH
+    GH --> CI
+    GH -->|PR| PREV
+    GH -->|main 머지| PROD
+    PREV --> SBDEV
+    PROD --> SBPROD
+    MIG --> SBPROD
+    PROD -.->|앱 웹뷰가 불러옴| IOS
+    PROD -.->|앱 웹뷰가 불러옴| AND
 ```
+
+앱(Capacitor)은 운영 웹 주소의 화면을 불러온다(`server.url`). 화면·API 변경은 웹 배포만으로 앱에도 반영되고, 앱 스토어 재심사는 Capacitor 설정·플러그인·아이콘이 바뀔 때만 필요하다.
 
 ### 4.2 환경 구성
 
-| 환경 | 용도 | URL 패턴 | 인프라 규모 | 데이터 |
-|------|------|----------|-------------|--------|
-| **Development (DEV)** | 개발/디버깅 | `dev.[도메인]` | 최소 (단일 인스턴스) | 테스트 데이터 |
-| **Staging (STG)** | 통합 테스트, QA | `stg.[도메인]` | 운영의 축소 구성 | 익명화된 운영 데이터 복제 |
-| **Production (PROD)** | 실서비스 운영 | `[도메인]` | 고가용성 구성 | 실 데이터 |
+| 환경 | 용도 | 인프라 | URL |
+|------|------|--------|-----|
+| Local | 개발자 로컬 개발 (AGENTS.md: `npm run dev`만, `npm run build` 금지) | Next.js 개발 서버 + `supabase start`(Docker 로컬 DB) | `http://localhost:3000` |
+| Preview | PR 확인·테스트 | Vercel Preview + Supabase 개발 프로젝트 | Vercel이 PR마다 발급 |
+| Production | 운영 | Vercel Production + Supabase 운영 프로젝트 | 미결 (도메인) |
 
 #### 환경별 상세 구성
 
-| 구성 요소 | DEV | STG | PROD |
-|-----------|-----|-----|------|
-| API Server 인스턴스 | 1 | 2 | [N개, 오토스케일링] |
-| DB 구성 | 단일 | Primary + Replica | Primary + Multi-Replica |
-| Redis | 단일 | 단일 | Cluster (3노드 이상) |
-| CDN | 미사용 | 사용 | 사용 |
-| WAF | 미사용 | 사용 | 사용 |
-| 모니터링 수준 | 기본 로깅 | 전체 | 전체 + 알림 |
-| SSL/TLS | 자체 서명 | Let's Encrypt | 상용 인증서 |
-| 백업 주기 | 미실시 | 일 1회 | [백업 정책에 따름] |
+| 항목 | Local | Preview | Production |
+|------|-------|---------|------------|
+| DB | 로컬 Docker (seed 가짜 데이터) | Supabase 개발 프로젝트 | Supabase 운영 프로젝트 |
+| 카카오 앱 | 개발용 카카오 앱 (Redirect URI `localhost`) | 개발용 카카오 앱 (Preview 도메인 등록) | 운영용 카카오 앱 |
+| 메일 | 콘솔 출력 (실제 발송 안 함) | 테스트 수신 주소로만 | 실제 발송 |
+| 푸시 | 끔 | 개발용 Firebase 프로젝트 | 운영 Firebase 프로젝트 |
+| OCR | 가짜 응답 (테스트 이미지 규칙) | 실제 API (사용량 제한) | 실제 API |
+| 로그 수준 | debug | info | info (개인정보 마스킹) |
+| 데이터 | 가짜 데이터만 | 가짜 데이터만 | 실제 사용자 데이터 |
+
+운영 데이터를 로컬·Preview로 복사하지 않는다 (개인정보).
 
 ### 4.3 CI/CD 파이프라인
 
 ```mermaid
-flowchart LR
-    subgraph "소스 관리"
-        GIT[Git Repository<br/>GitHub / GitLab]
-    end
-
-    subgraph "CI 파이프라인"
-        LINT[Lint / Format<br/>ESLint, Prettier]
-        TEST[Unit Test<br/>Jest / JUnit]
-        BUILD[Build<br/>Docker Image]
-        SCAN[보안 스캔<br/>SonarQube, Trivy]
-        PUSH[이미지 Push<br/>ECR / GCR]
-    end
-
-    subgraph "CD 파이프라인"
-        DEV_DEPLOY[DEV 배포<br/>자동]
-        STG_DEPLOY[STG 배포<br/>자동]
-        INT_TEST[통합 테스트<br/>E2E Test]
-        APPROVAL[수동 승인<br/>배포 관리자]
-        PROD_DEPLOY[PROD 배포<br/>Blue-Green / Rolling]
-    end
-
-    GIT -->|Push / PR| LINT
-    LINT --> TEST
-    TEST --> BUILD
-    BUILD --> SCAN
-    SCAN -->|통과| PUSH
-    PUSH --> DEV_DEPLOY
-    DEV_DEPLOY --> STG_DEPLOY
-    STG_DEPLOY --> INT_TEST
-    INT_TEST -->|통과| APPROVAL
-    APPROVAL -->|승인| PROD_DEPLOY
-
-    style LINT fill:#E8A838,color:#fff
-    style TEST fill:#4A90D9,color:#fff
-    style SCAN fill:#D94A4A,color:#fff
-    style APPROVAL fill:#8B5CF6,color:#fff
-    style PROD_DEPLOY fill:#5BA85B,color:#fff
+graph LR
+    A["PR 생성"] --> B["CI: npm ci"]
+    B --> C["lint<br/>(npm run lint)"]
+    C --> D["typecheck<br/>(tsc --noEmit)"]
+    D --> E["test<br/>(npm run test)"]
+    E --> F["비밀값 검사<br/>(gitleaks)"]
+    F --> G["마이그레이션 검증<br/>(빈 DB에 전체 적용)"]
+    G --> H["Vercel Preview 배포"]
+    H --> I["리뷰·머지"]
+    I --> J["Vercel Production 배포"]
+    I --> K["DB 마이그레이션<br/>(수동 승인 후 supabase db push)"]
 ```
 
 #### CI 단계 상세
 
-| 단계 | 도구 | 트리거 조건 | 실패 시 동작 |
-|------|------|-------------|--------------|
-| 코드 품질 검사 | [ESLint / SonarQube] | PR 생성, Push | PR 머지 차단 |
-| 단위 테스트 | [Jest / JUnit] | PR 생성, Push | PR 머지 차단 |
-| 커버리지 확인 | [Istanbul / JaCoCo] | PR 생성 | 기준 미달 시 경고 ([N]% 이상) |
-| Docker 빌드 | [Docker / Buildah] | 머지 시 | 파이프라인 중단 |
-| 보안 스캔 | [Trivy / Snyk] | 빌드 완료 후 | Critical 취약점 시 중단 |
-| 이미지 Push | [ECR / GCR / Docker Hub] | 스캔 통과 후 | 파이프라인 중단 |
+| 단계 | 도구 | 기준 | 실패 시 |
+|------|------|------|---------|
+| 의존성 설치 | `npm ci` | lockfile과 일치 (AGENTS.md 2장) | PR 차단 |
+| 정적 분석 | ESLint (`npm run lint`) | 오류 0건 (NFR-011) | PR 차단 |
+| 타입 검사 | `tsc --noEmit` | 오류 0건 | PR 차단 |
+| 단위 테스트 | Vitest (`npm run test`) | 비즈니스 규칙 테스트 통과: 권한 표, 가격 표기, 필수 항목, 계좌번호 패턴, 관심 조건 매칭, 자동 숨김 (NFR-011) | PR 차단 |
+| 비밀값 검사 | gitleaks | 커밋된 API 키·비밀키 0건 (4.5) | PR 차단 |
+| 마이그레이션 검증 | Supabase CLI (CI 안 로컬 DB) | 전체 마이그레이션이 빈 DB에 적용됨 | PR 차단 |
+| 빌드 | Vercel이 Preview 배포 시 수행 | 빌드 성공 | 배포 안 됨 |
+
+CI 안의 프로덕션 빌드는 Vercel이 맡는다. 에이전트 세션에서는 `npm run build`를 실행하지 않는다 (AGENTS.md 1장).
 
 #### CD 단계 상세
 
-| 환경 | 배포 전략 | 트리거 | 롤백 방법 |
-|------|-----------|--------|-----------|
-| DEV | 직접 배포 | main 머지 시 자동 | 이전 이미지 재배포 |
-| STG | [Blue-Green / Rolling] | DEV 성공 후 자동 | 이전 버전 전환 |
-| PROD | [Blue-Green / Canary / Rolling] | 수동 승인 후 | [롤백 전략 상세] |
+| 단계 | 방식 | 비고 |
+|------|------|------|
+| Preview 배포 | PR push마다 Vercel 자동 | 개발 Supabase에 연결 |
+| Production 배포 | `main` 머지 시 Vercel 자동 | 문제가 있으면 Vercel에서 이전 배포로 즉시 되돌림 |
+| DB 마이그레이션 | GitHub Actions `workflow_dispatch` + 환경 보호 규칙(승인자 이유나) | 하위 호환 순서(확장 → 전환 → 정리, DB 설계서 5.5)로 앱 배포와 독립 |
+| 앱 빌드 | 수동 (Capacitor sync → Xcode·Android Studio) | 플러그인·설정 변경 시만 |
 
 ### 4.4 인프라 코드(IaC) 전략
 
 | 항목 | 내용 |
 |------|------|
-| IaC 도구 | [Terraform / Pulumi / CloudFormation] |
-| 상태 관리 | [S3 + DynamoDB Lock / Terraform Cloud / 기타] |
-| 모듈 구조 | 환경별(dev/stg/prod) 분리, 공통 모듈 재사용 |
-| 버전 관리 | Git 기반, 코드 리뷰 필수 |
-| 적용 프로세스 | Plan 검토 -> 승인 -> Apply |
+| IaC 도구 | 해당 없음 (Terraform 미사용). 관리형 서비스 2개(Vercel, Supabase)라 대시보드 설정 + 저장소 설정 파일로 충분 |
+| 코드로 관리하는 것 | `supabase/config.toml`, `supabase/migrations/*.sql`(스키마·RLS·pg_cron), `vercel.json`(리전·헤더), `capacitor.config.ts`, `.github/workflows/*.yml` |
+| 대시보드에서만 관리하는 것 | 환경 변수 값(비밀), 도메인, 카카오·Firebase·OCR 콘솔 설정 |
 
 #### IaC 디렉토리 구조
 
 ```
-infra/
-├── modules/
-│   ├── networking/       # VPC, Subnet, Security Group
-│   ├── compute/          # ECS / EKS / EC2
-│   ├── database/         # RDS, ElastiCache
-│   ├── storage/          # S3, EFS
-│   └── monitoring/       # CloudWatch, Grafana
-├── environments/
-│   ├── dev/
-│   │   ├── main.tf
-│   │   ├── variables.tf
-│   │   └── terraform.tfvars
-│   ├── stg/
-│   └── prod/
-├── backend.tf
-└── versions.tf
+sookbak-sookbak/
+├── .github/workflows/
+│   ├── ci.yml                 # lint·typecheck·test·gitleaks·마이그레이션 검증
+│   └── db-migrate.yml         # 수동 승인 운영 마이그레이션
+├── supabase/
+│   ├── config.toml
+│   ├── migrations/
+│   └── seed.sql               # 가짜 데이터만
+├── src/
+│   ├── app/                   # 화면 + API (App Router)
+│   │   ├── (main)/            # 홈·상세·글쓰기·찜·채팅·마이
+│   │   ├── (auth)/            # 카카오 시작·학교 메일·학생증
+│   │   ├── admin/             # 관리자 화면
+│   │   └── api/
+│   │       ├── v1/            # 공개 REST API
+│   │       └── internal/jobs/ # pg_cron이 호출하는 작업 (CRON_SECRET)
+│   ├── components/ui/         # DESIGN.md 컴포넌트
+│   ├── server/
+│   │   ├── modules/           # 도메인 서비스 (2.5)
+│   │   └── infra/             # 외부 연동 클라이언트
+│   └── lib/                   # 공용 (Zod 스키마, 가격 표기, 토큰)
+├── capacitor.config.ts
+├── vercel.json
+├── .env.example               # 이름만, 값 없음 (커밋)
+├── .env.local                 # 실제 값 (커밋 금지, .gitignore)
+└── .gitignore
 ```
+
+### 4.5 비밀 정보(API 키) 관리
+
+사용자 요청(2026-11-26): "깃허브에 API 안 올라가게 주의". 카카오·Supabase·Firebase·메일·OCR 키와 서명 키가 저장소에 올라가지 않도록 다음 규칙을 따른다 (NFR-005 비밀 정보).
+
+#### 규칙
+
+| # | 규칙 |
+|---|------|
+| S-1 | 비밀값은 환경 변수로만 읽는다. 소스 코드, 마이그레이션, seed, 테스트 코드, 문서, 커밋 메시지, PR 본문에 실제 키를 쓰지 않는다 |
+| S-2 | 로컬 값은 `.env.local`에 둔다. `.gitignore`가 `.env`, `.env.*`를 무시하고 `.env.example`만 예외로 허용한다 |
+| S-3 | `.env.example`에는 변수 이름과 설명만 쓰고 값은 비워 둔다 |
+| S-4 | 배포 환경 값은 Vercel 환경 변수(Preview / Production 분리), DB 마이그레이션 작업 값은 GitHub Actions Secrets에만 넣는다 |
+| S-5 | `NEXT_PUBLIC_` 접두사는 브라우저에 그대로 노출되므로 **원래 공개용인 값**(Supabase URL·anon 키, 카카오 JavaScript 키)에만 쓴다. 공개용 키도 콘솔에서 허용 도메인을 제한한다 |
+| S-6 | 서버 전용 키(서비스 키, JWT 비밀키, 카카오 REST·Admin 키, Firebase 비공개 키, 메일·OCR 키)는 `src/server/**`에서만 읽고, 이 폴더에는 `import "server-only"`를 넣어 화면 코드에 섞이면 빌드가 실패하게 한다 |
+| S-7 | CI에서 gitleaks로 커밋에 비밀값이 있는지 검사하고, GitHub 저장소 설정에서 Secret scanning과 Push protection을 켠다 |
+| S-8 | 키가 실수로 커밋되면 커밋을 지우는 것만으로는 부족하다. 즉시 해당 콘솔에서 키를 폐기·재발급하고, 그다음 기록을 정리한다 |
+| S-9 | 로그·오류 추적(Sentry)에 토큰·인증번호·키가 찍히지 않도록 마스킹한다 (NFR-006) |
+| S-10 | 개발용·운영용 키를 분리한다 (카카오 앱, Firebase 프로젝트, Supabase 프로젝트 각각 2개) |
+
+#### 환경 변수 목록 (`.env.example`)
+
+| 변수 | 공개 여부 | 용도 |
+|------|----------|------|
+| `NEXT_PUBLIC_APP_URL` | 공개 | 앱 기본 주소 (카카오 Redirect URI 조합) |
+| `NEXT_PUBLIC_SUPABASE_URL` | 공개 | Supabase 프로젝트 주소 |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | 공개 | Realtime 연결용. RLS로 보호되며 단독으로 데이터 접근 불가 |
+| `SUPABASE_SERVICE_ROLE_KEY` | **서버 전용** | 서버 DB·저장소 접근 (RLS 우회 권한) |
+| `SUPABASE_JWT_SECRET` | **서버 전용** | Access Token 서명 (ADR-003) |
+| `KAKAO_REST_API_KEY` | **서버 전용** | 카카오 OAuth 토큰 교환, 로컬 API |
+| `KAKAO_CLIENT_SECRET` | **서버 전용** | 카카오 OAuth Client Secret |
+| `KAKAO_ADMIN_KEY` | **서버 전용** | 탈퇴 시 연결 끊기 (카카오 토큰을 저장하지 않으므로) |
+| `NEXT_PUBLIC_KAKAO_JS_KEY` | 공개 (도메인 제한) | 카카오 지도 SDK |
+| `RESEND_API_KEY`, `MAIL_FROM` | **서버 전용** | 메일 발송 |
+| `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` | **서버 전용** | FCM 발송 |
+| `GOOGLE_VISION_API_KEY` | **서버 전용** | OCR |
+| `IDENTIFIER_HASH_SECRET` | **서버 전용** | 학번·이메일·카카오 회원번호 HMAC (DB 설계서 `banned_identifiers`) |
+| `EMAIL_CODE_HASH_SECRET` | **서버 전용** | 인증번호 HMAC |
+| `CRON_SECRET` | **서버 전용** | 내부 작업 API 호출 확인 |
+| `SENTRY_DSN` | 공개 | 오류 추적 (DSN은 공개 가능) |
+
+앱 포장 쪽 파일(`google-services.json`, `GoogleService-Info.plist`)도 `.gitignore`에 넣고 빌드 담당자 기기에서만 관리한다.
 
 ---
 
@@ -525,107 +612,128 @@ infra/
 
 ### 5.1 ADR 템플릿
 
-```
+```markdown
 ## ADR-[NNN]: [결정 제목]
 
 | 항목 | 내용 |
 |------|------|
-| **ADR ID** | ADR-[NNN] |
-| **상태** | [제안(Proposed) / 승인(Accepted) / 폐기(Deprecated) / 대체(Superseded by ADR-XXX)] |
-| **날짜** | [YYYY-MM-DD] |
-| **의사결정자** | [이름 / 역할] |
+| **상태** | [제안됨 / 승인됨 / 폐기됨 / 대체됨(ADR-XXX)] |
+| **결정일** | [YYYY-MM-DD] |
+| **결정자** | [이름 / 역할] |
 
 ### 컨텍스트 (Context)
-[결정이 필요한 배경과 상황을 기술한다.]
+[결정이 필요한 배경, 관련 FR·NFR·DEC-ID]
 
 ### 결정 (Decision)
-[내린 결정을 명확하게 기술한다.]
+[내린 결정]
 
 ### 근거 (Rationale)
-[결정의 이유와 고려한 대안들을 기술한다.]
-- 선택지 1: [설명] — [장점/단점]
-- 선택지 2: [설명] — [장점/단점]
-- 선택지 3: [설명] — [장점/단점]
+[대안 비교와 선택 이유]
 
 ### 결과 (Consequences)
-- 긍정적: [기대되는 긍정적 결과]
-- 부정적: [감수해야 할 부정적 결과 또는 트레이드오프]
-- 중립적: [기타 영향]
+- 긍정적: …
+- 부정적: …
+- 후속 조치: …
 ```
 
 ### 5.2 ADR 목록
 
-| ADR ID | 제목 | 상태 | 날짜 |
-|--------|------|------|------|
-| ADR-001 | [백엔드 프레임워크 선정] | [승인] | [YYYY-MM-DD] |
-| ADR-002 | [인증 방식 결정] | [승인] | [YYYY-MM-DD] |
-| [ADR-NNN] | [제목] | [상태] | [날짜] |
+| ADR 번호 | 제목 | 상태 | 결정일 | 관련 요구사항 |
+|----------|------|------|--------|--------------|
+| ADR-001 | 앱 구현 방식: Next.js 모바일 웹앱 + Capacitor 앱 포장 | **제안됨 (사용자 확인 대기, DEC-010)** | 2026-11-26 | NFR-010, NFR-003, FR-021 |
+| ADR-002 | 백엔드: Next.js Route Handlers + Supabase | 제안됨 | 2026-11-26 | NFR-002, NFR-008, SRS 7.3 |
+| ADR-003 | 인증: 카카오 OAuth + 숙박숙박 자체 토큰 (Supabase Auth 미사용) | 제안됨 | 2026-11-26 | FR-001, FR-002, NFR-004 |
+| ADR-004 | 실시간 채팅: 전송은 API, 수신은 Supabase Realtime 구독 | 제안됨 | 2026-11-26 | FR-015, NFR-001, NFR-003 |
+| ADR-005 | 정확한 위치를 별도 비공개 테이블에 저장하고 표시 중심만 공개 | 제안됨 | 2026-11-26 | FR-010, AC-010-1·3 |
+| ADR-006 | 알림: DB 아웃박스 + pg_cron 매분 발송 | 제안됨 | 2026-11-26 | FR-020, FR-021, NFR-001 |
+| ADR-007 | 채팅 계좌번호 차단: 텍스트 정규식 + 사진 OCR, 서버 재검사 | 제안됨 | 2026-11-26 | FR-015, DEC-014 |
+| ADR-008 | 비밀 정보는 환경 변수로만, CI 비밀값 검사 | 제안됨 | 2026-11-26 | NFR-005, 사용자 요청 2026-11-26 |
 
-### 5.3 ADR 예시
+### 5.3 ADR 상세
 
-#### ADR-001: 백엔드 프레임워크로 [NestJS / Spring Boot] 선정
-
-| 항목 | 내용 |
-|------|------|
-| **ADR ID** | ADR-001 |
-| **상태** | 승인 (Accepted) |
-| **날짜** | [YYYY-MM-DD] |
-| **의사결정자** | [기술 리드, 시니어 개발자] |
-
-**컨텍스트**
-
-[프로젝트명]의 백엔드 서비스를 구현할 프레임워크를 선정해야 한다. 팀은 [N]명의 개발자로 구성되어 있으며, [TypeScript / Java]에 대한 경험이 [상/중/하] 수준이다. 시스템은 [동시 접속자 수], [트랜잭션 처리량] 등의 요구사항을 충족해야 한다.
-
-**결정**
-
-백엔드 프레임워크로 **[NestJS / Spring Boot]**를 선정한다.
-
-**근거**
-
-- 선택지 1: NestJS — TypeScript 기반, 모듈 구조 체계적, 프론트엔드와 언어 통일 가능. 단, 대규모 엔터프라이즈 레퍼런스 상대적으로 적음.
-- 선택지 2: Spring Boot — Java 기반, 엔터프라이즈 검증 완료, 풍부한 생태계. 단, 팀 Java 경험이 부족하면 학습 곡선 존재.
-- 선택지 3: Django — Python 기반, 빠른 프로토타이핑 가능. 단, 대규모 비동기 처리 성능에 제약.
-
-[선택한 프레임워크]를 선정한 주요 이유: [구체적 이유 2~3가지]
-
-**결과**
-
-- 긍정적: [예) 프론트엔드와 동일 언어 사용으로 코드 공유 및 팀 효율성 향상]
-- 부정적: [예) 특정 엔터프라이즈 패턴 구현 시 추가 라이브러리 필요]
-- 중립적: [예) 기존 레거시 시스템과의 통합을 위한 어댑터 패턴 적용 필요]
-
----
-
-#### ADR-002: JWT 기반 인증과 세션 쿠키 방식 중 JWT 선정
+#### ADR-001: 앱 구현 방식 — Next.js 모바일 웹앱 + Capacitor 앱 포장
 
 | 항목 | 내용 |
 |------|------|
-| **ADR ID** | ADR-002 |
-| **상태** | 승인 (Accepted) |
-| **날짜** | [YYYY-MM-DD] |
-| **의사결정자** | [기술 리드, 보안 담당자] |
+| **상태** | 제안됨 (이유나 확인 대기, DEC-010) |
+| **결정일** | 2026-11-26 |
+| **결정자** | 이유나 (기획 책임자) / Claude (제안) |
 
 **컨텍스트**
 
-사용자 인증 및 인가 방식을 결정해야 한다. 시스템은 웹과 모바일 클라이언트를 모두 지원해야 하며, [마이크로서비스 / 모놀리식] 구조에서 서비스 간 인증 정보 전달이 필요하다.
+SRS는 앱 구현 방식을 SAD에서 정하도록 남겼다 (DEC-010). 결정 기준은 앱 푸시 안정성(NFR-003, FR-021 관심 매물 알림 1분), 앱 스토어 배포, 저장소 AGENTS.md(Next.js) 정합성이다. 모바일 우선(2026-11-26 결정)이며 데스크톱 최적화는 제외(EX-011)다.
 
 **결정**
 
-**JWT (JSON Web Token)** 기반 인증 방식을 채택한다. Access Token + Refresh Token 조합을 사용한다.
+Next.js(App Router)로 모바일 우선 웹앱을 만들고, 같은 화면을 Capacitor로 감싸 iOS·Android 앱으로 배포한다. 앱 푸시는 Capacitor 푸시 플러그인 + FCM(iOS는 APNs 경유)으로 받는다. 웹(브라우저)으로도 같은 화면을 쓸 수 있어 공유 링크를 앱 설치 없이 열 수 있다.
 
 **근거**
 
-- 선택지 1: JWT — Stateless, 서비스 간 전파 용이, 모바일 친화적. 단, 토큰 무효화 즉시 불가(만료까지 대기 또는 블랙리스트 관리 필요).
-- 선택지 2: 세션 쿠키 — 서버측 세션 관리로 즉시 무효화 가능, 구현 단순. 단, 서비스 확장 시 세션 공유 문제, 모바일 앱에서 쿠키 관리 복잡.
-- 선택지 3: OAuth 2.0 + OIDC — 표준 프로토콜, 소셜 로그인 지원 용이. 단, 자체 구현 복잡도 높음.
-
-JWT를 선정한 주요 이유: 웹/모바일 통합 지원, Stateless 아키텍처에 적합, 서비스 간 인증 정보 전달 용이.
+| 대안 | 장점 | 단점 |
+|------|------|------|
+| **Next.js + Capacitor (선택)** | 코드 한 벌, AGENTS.md와 일치, 웹 배포만으로 화면 갱신, 네이티브 푸시 | 웹뷰라 스크롤·전환이 네이티브보다 약간 덜 부드러움. 앱 스토어가 "웹사이트 포장"으로 보고 반려할 위험(푸시·카메라 등 기기 기능으로 완화) |
+| React Native (Expo) | 가장 앱다운 품질, 푸시 안정 | 화면 코드가 Next.js와 따로 생겨 두 벌. 일정 부담 |
+| PWA만 | 가장 단순, 스토어 비용 없음 | iOS는 홈 화면에 추가해야 푸시 가능 → 관심 매물 알림·채팅 알림 도달률 낮음 |
 
 **결과**
 
-- 긍정적: Stateless 구조로 수평 확장 용이, 클라이언트 플랫폼 독립적
-- 부정적: 토큰 즉시 무효화를 위해 Redis 기반 블랙리스트 구현 필요
-- 중립적: Refresh Token 로테이션 및 보안 저장 정책 별도 수립 필요
+- 긍정적: 하나의 TypeScript 저장소로 화면·API·관리자 화면을 만든다. 공유 링크가 웹에서 바로 열린다.
+- 부정적: 카카오톡 앱으로 로그인 넘기기(앱 간 전환)는 웹뷰에서 동작을 확인해야 한다(상세 설계에서 시험). 앱 스토어 심사 대응이 필요하다.
+- 후속 조치: 사용자가 React Native나 PWA를 고르면 2.4 컨테이너, 3.2 프론트엔드, 화면 설계서 1.3을 바꾼다. API·DB 설계는 어느 쪽이든 그대로 쓴다.
+
+#### ADR-002: 백엔드 — Next.js Route Handlers + Supabase
+
+| 항목 | 내용 |
+|------|------|
+| **상태** | 제안됨 |
+| **결정일** | 2026-11-26 |
+| **결정자** | 이유나 / Claude |
+
+**컨텍스트**: 1인 + AI 보조 개발, 무료~저비용, 서버 직접 운영 없음. 데이터는 관계형(회원·글·채팅·신고)이고 한도·중복 정책을 DB에서도 지켜야 한다. 채팅 실시간 연결과 매일·매분 예약 작업이 필요하다.
+
+**결정**: API는 Next.js Route Handlers(`/api/v1`)로 만들고 Vercel 서울 리전에서 실행한다. DB·파일·실시간·예약 작업은 Supabase(서울) 하나로 해결한다.
+
+**근거**: 별도 서버 프레임워크(NestJS 등)는 배포 대상을 하나 더 늘린다. Firebase는 관계·유니크 제약이 약해 "1인 공개 글 3건", "(글, 문의자)당 채팅방 1개" 같은 규칙을 지키기 어렵다. Supabase는 PostgreSQL을 그대로 쓰므로 나중에 다른 호스팅으로 옮길 수 있다.
+
+**결과**: (+) 배포 2곳(Vercel, Supabase)만 관리. (−) Vercel 함수 실행 시간 제한(무료 10초, 초안) 안에 사진 처리·OCR을 끝내야 한다 → 사진은 1장씩 업로드 요청을 나눈다. (후속) 운영 Supabase Pro 플랜 전환 여부(DB-Q3).
+
+#### ADR-003: 인증 — 카카오 OAuth + 숙박숙박 자체 토큰
+
+| 항목 | 내용 |
+|------|------|
+| **상태** | 제안됨 |
+| **결정일** | 2026-11-26 |
+| **결정자** | 이유나 / Claude |
+
+**컨텍스트**: 로그인은 카카오(DEC-009 확정). 카카오에서는 회원번호만 받고, 카카오 토큰은 저장하지 않으며, 로그인 유지는 숙박숙박 토큰으로 한다(FR-002, NFR-004). 인증 단계(학교 메일·학생증)는 우리 DB가 판단한다.
+
+**결정**:
+1. 앱이 카카오 인가 화면으로 보내고(state 값 포함), 돌아온 인가 코드를 `POST /api/v1/auth/kakao`로 서버에 보낸다.
+2. 서버가 카카오에 토큰을 교환하고 `/v2/user/me`로 회원번호만 확인한 뒤 카카오 토큰은 버린다.
+3. 서버가 Access Token(JWT, 1시간, HS256, Supabase JWT 비밀키로 서명, `sub` = 회원 ID, `role` = `authenticated`)과 Refresh Token(무작위 256비트, DB에는 해시만, 마지막 이용 + 30일, 쓸 때마다 교체)을 발급한다.
+4. Refresh Token은 HttpOnly·Secure·SameSite=Lax 쿠키(`/api/v1/auth` 경로 한정)로 내려 웹·앱 웹뷰 모두 화면 코드가 읽을 수 없게 한다. Access Token은 메모리에만 둔다.
+5. 인증 단계·정지 여부는 토큰에 의존하지 않고 요청마다 DB의 현재 `users.status`로 판단한다 (승인·정지가 즉시 반영되도록).
+
+**근거**: Supabase Auth의 카카오 연동은 이메일 동의 항목 요구 등 "회원번호만" 원칙과 맞추기 어렵다. Access Token을 Supabase JWT 비밀키로 서명하면 같은 토큰으로 Realtime 구독 시 RLS(`auth.uid()`)가 동작한다.
+
+**결과**: (+) 비밀번호 없음(AC-002-2), 카카오 정보 최소 수집. (−) 토큰 로테이션·탈취 감지(같은 계열 재사용 시 전부 폐기)를 직접 구현해야 한다. (후속) Supabase가 비대칭 서명 키로 바꾸면 서명 방식을 맞춘다.
+
+#### ADR-004: 실시간 채팅 — 전송은 API, 수신은 Realtime 구독
+
+**컨텍스트**: 메시지는 1초 안에 상대 화면에 나타나야 하고(AC-015-1), 계좌번호가 든 메시지는 서버가 거부해야 한다(AC-015-4). Vercel 함수는 WebSocket 연결을 유지할 수 없다.
+
+**결정**: 보내기는 `POST /api/v1/chat-rooms/{id}/messages`(권한·차단·계좌번호 검사 후 저장). 받기는 Supabase Realtime으로 `chat_messages` INSERT를 `room_id`로 구독하고, RLS가 참여자만 받게 한다. 앱이 꺼져 있거나 그 방을 보고 있지 않으면 푸시를 보낸다. 재접속 시 `GET .../messages?after={마지막 메시지 시각}`으로 놓친 메시지를 받는다.
+
+**결과**: (+) 검사를 우회하는 직접 쓰기가 불가능. (−) 전송 경로가 HTTP라 순수 WebSocket보다 수십 ms 느림(1초 목표 안). 읽음 표시는 `PATCH .../read`로 갱신하고 Realtime으로 상대에게 전달한다.
+
+#### ADR-005 ~ ADR-008 요약
+
+| ADR | 결정 | 근거·결과 |
+|-----|------|-----------|
+| ADR-005 위치 비공개 | 건물 주소·좌표는 `post_private_locations`(RLS 정책 없음)에만, 상세 지도에는 글 생성 시 한 번 무작위로 옮겨 고정한 표시 중심(반경 150m 원) | 실수로 응답에 섞일 수 없는 구조. 다시 열어도 원이 같은 자리(AC-010-3) |
+| ADR-006 알림 아웃박스 | 알림은 `notifications` 행으로 먼저 저장하고, API 응답 후 즉시 발송을 시도(`after()`), 실패·야간 지연분은 pg_cron 매분 작업이 발송 | 관심 매물 1분(NFR-001) 충족. 푸시가 실패해도 인앱 목록에 남음. 같은 글 1회는 `dedupe_key` 유니크 |
+| ADR-007 계좌번호 차단 | 텍스트: `app_settings`의 패턴으로 앱·서버 두 번 검사. 사진: 업로드 시 OCR 후 같은 패턴 검사, 걸리면 `REJECTED` 처리해 메시지에 첨부 불가. OCR 실패 시 통과 + 신고로 보완 | DEC-014 확정 사항 구현. 패턴은 설정값이라 오탐·미탐을 운영 중 조정 |
+| ADR-008 비밀 정보 | 4.5 규칙 | 사용자 요청. 키 노출 시 폐기·재발급 절차 포함 |
 
 ---
 
@@ -635,144 +743,151 @@ JWT를 선정한 주요 이유: 웹/모바일 통합 지원, Stateless 아키텍
 
 #### 성능 목표
 
-| 지표 | 목표 값 | 측정 방법 |
-|------|---------|-----------|
-| API 응답 시간 (P50) | [< 200ms] | [APM 도구] |
-| API 응답 시간 (P95) | [< 500ms] | [APM 도구] |
-| API 응답 시간 (P99) | [< 1000ms] | [APM 도구] |
-| 동시 접속자 수 | [N명] | [부하 테스트] |
-| 초당 요청 수 (RPS) | [N건/초] | [부하 테스트] |
-| 페이지 로딩 시간 | [< 2초] | [Lighthouse] |
+| 항목 | 목표 (NFR-001·002) | 대응 |
+|------|-------------------|------|
+| 홈 첫 화면 | 첫 카드 10개 2초, LCP 2.5초 (4G) | 첫 20개 목록을 서버 컴포넌트에서 렌더링해 HTML에 포함, 썸네일 336px WebP, 첫 10장만 즉시 로드 나머지 lazy-load, Pretendard 서브셋 |
+| 목록·검색 API | p95 500ms | 부분 인덱스(DB 설계서 6.4), 커서 페이지네이션, 카드용 컬럼만 선택 |
+| 상세 API | p95 300ms | PK 조회 + 사진 1쿼리 |
+| 글 등록 | p95 1초 (사진 제외) | 사진은 미리 업로드, 등록은 DB 함수 1회 호출 |
+| 사진 업로드 | 10MB 5초 | 앱에서 긴 변 2048px로 줄여 올림(원본 10MB 이하 허용), 서버에서 WebP 2종 생성 |
+| 채팅 전달 | 1초 | ADR-004 |
+| 관심 매물 푸시 | 1분 | ADR-006. 조건 5,000개 매칭은 SQL 1회 (분류·유형으로 후보를 좁힌 뒤 가격·위치·키워드 비교) |
+| 동시 사용자 | 정상 200, 최대 500, 채팅 연결 300 | Vercel 함수 자동 확장, Supabase 연결 풀(Supavisor), Realtime 동시 연결은 Pro 기준 500 |
 
 #### 캐싱 전략
 
-| 캐시 대상 | 캐시 저장소 | TTL | 무효화 전략 |
-|-----------|-------------|-----|-------------|
-| API 응답 (목록 조회) | Redis | [N분] | 데이터 변경 시 삭제 |
-| 사용자 세션 | Redis | [N시간] | 로그아웃 시 삭제 |
-| 정적 자산 (JS/CSS/이미지) | CDN | [N일] | 배포 시 버전 갱신 |
-| DB 쿼리 결과 | Redis | [N분] | Write-Through / Write-Behind |
-| [추가 대상] | [저장소] | [TTL] | [전략] |
+| 대상 | 방식 | TTL | 비고 |
+|------|------|-----|------|
+| 사진 | Supabase Storage CDN | 1년 (파일명이 내용별로 고유) | 사진 수정 = 새 파일 |
+| 비회원 목록 첫 페이지 | Vercel CDN `s-maxage` | 30초 | 로그인 사용자는 차단 목록이 달라 캐시하지 않음 |
+| `app_settings` | 서버 메모리 | 1분 | 관리자 수정 후 1분 안 반영 |
+| 클라이언트 목록 | TanStack Query | 30초 stale | 뒤로 가기 시 즉시 표시 |
+| 정적 파일 (JS·CSS·서체) | Vercel CDN | 불변 해시 파일명 | |
 
 #### CDN 구성
 
 | 항목 | 설정 |
 |------|------|
-| CDN 서비스 | [CloudFront / Cloudflare / Akamai] |
-| 캐시 대상 | 정적 자산 (JS, CSS, 이미지, 폰트) |
-| 오리진 | [S3 / API Server] |
-| 캐시 정책 | [Cache-Control 헤더 기반] |
-| 무효화 | [배포 시 자동 Invalidation / 파일 해시 기반] |
+| 화면·정적 파일 | Vercel Edge Network |
+| 사진 | Supabase Storage 공개 버킷 CDN (경로: `post-photos/{yyyy}/{mm}/{uuid}_{thumb|detail}.webp`) |
+| 학생증 원본 | CDN 미사용, 비공개 버킷, 관리자 화면에서 60초 서명 URL로만 열람 |
 
 #### 데이터베이스 최적화
 
-| 최적화 항목 | 적용 전략 | 상세 |
-|-------------|-----------|------|
-| 쿼리 최적화 | 인덱스, 쿼리 플랜 분석 | [상세 전략] |
-| 커넥션 풀링 | [HikariCP / pg-pool] | 최소 [N], 최대 [N] 커넥션 |
-| 읽기/쓰기 분리 | Read Replica 활용 | 읽기 전용 쿼리를 Replica로 라우팅 |
-| N+1 문제 방지 | Eager Loading / DataLoader | [상세 전략] |
-| [추가 항목] | [전략] | [상세] |
+[DB 설계서 6장](데이터베이스설계서.md#6-성능-설계)을 따른다. 연결은 Supabase 트랜잭션 풀러(포트 6543)를 쓰고 함수 인스턴스마다 연결을 재사용한다.
 
 ### 6.2 보안 (Security)
 
 #### 인증/인가 아키텍처
 
 ```mermaid
-flowchart LR
-    CLIENT[클라이언트] -->|1. 로그인 요청| AUTH[Auth Service]
-    AUTH -->|2. 자격 증명 검증| DB[(User DB)]
-    AUTH -->|3. JWT 발급| CLIENT
-    CLIENT -->|4. API 요청 + Bearer Token| GW[API Gateway]
-    GW -->|5. 토큰 검증| AUTH
-    GW -->|6. 인가된 요청 전달| API[API Service]
-    API -->|7. RBAC 검사| API
-    API -->|8. 응답| CLIENT
+sequenceDiagram
+    actor U as 사용자
+    participant A as 앱 (웹뷰)
+    participant K as 카카오
+    participant S as 숙박숙박 API
+    participant D as DB
+
+    U->>A: 카카오로 시작하기
+    A->>K: 인가 요청 (client_id, redirect_uri, state)
+    K-->>A: redirect_uri?code=...&state=...
+    A->>S: POST /api/v1/auth/kakao {code, state}
+    S->>K: 토큰 교환 (REST 키·Client Secret, 서버 전용)
+    K-->>S: 카카오 access token
+    S->>K: GET /v2/user/me (회원번호만 사용)
+    S->>S: 카카오 토큰 폐기
+    S->>D: kakao_id로 회원 조회 / 재가입 제한 확인
+    alt 기존 회원 (정상)
+        S->>D: 세션 생성 (Refresh 해시)
+        S-->>A: Access Token + Refresh 쿠키 + 사용자 정보
+    else 처음
+        S-->>A: signupToken (10분, 닉네임·약관 단계)
+    else 정지·탈퇴 30일 이내
+        S-->>A: 403 사유와 가능 시점
+    end
+    Note over A,S: 이후 요청: Authorization: Bearer {Access}<br/>서버는 매 요청 users.status로 권한 판단 (FR-004)
 ```
+
+| 계층 | 위협 | 대응 |
+|------|------|------|
+| 전송 | 도청 | HTTPS·WSS(TLS 1.2+), HSTS |
+| 인증 | OAuth 위변조·CSRF | state 검증, 서버에서 카카오 확인, Refresh 쿠키 SameSite=Lax + 경로 한정 + `X-Requested-With` 헤더 확인 |
+| 토큰 탈취 | Refresh 재사용 | 로테이션 + 계열 재사용 감지 시 계열 전체 폐기, Access 1시간 |
+| 인가 | 권한 우회 (직접 API 호출) | 모든 Route Handler 첫 줄에서 `policy.require(level)` (AC-004-4) |
+| 데이터 노출 | 주소·학번·이메일 유출 | 응답 DTO 분리, 위치 비공개 테이블, 학번 해시 |
+| 입력 | XSS·SQL 주입 | React 기본 이스케이프, 본문은 텍스트로만 렌더링(HTML 미허용), 파라미터 바인딩, Zod 검증 |
+| 파일 | 악성 파일·위치 노출 | MIME·크기 검사, `sharp`로 다시 인코딩(EXIF 제거), 원본 저장 안 함 |
+| 남용 | 인증번호 폭탄·도배 | 요청 제한 (API 설계서 7장), 인증번호 60초·5회 잠금 |
+| 관리자 | 권한 상승 | `role = 'ADMIN'`은 DB에서만 지정, `/admin`·`/api/v1/admin` 이중 확인, 모든 작업 감사 로그 |
+| 비밀 정보 | 키 유출 | 4.5 |
+| 보안 헤더 | 클릭재킹 등 | CSP(카카오·Supabase 도메인만 허용), `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin` |
 
 #### 보안 계층별 대응
 
-| 계층 | 위협 | 대응 방안 |
-|------|------|-----------|
-| 네트워크 | DDoS, 중간자 공격 | WAF, TLS 1.3, VPC 격리 |
-| 인증 | 무차별 대입, 세션 탈취 | Rate Limiting, JWT 만료, Refresh Token 로테이션 |
-| 인가 | 권한 상승, IDOR | RBAC/ABAC, 리소스 소유권 검증 |
-| 입력 | SQL Injection, XSS, CSRF | 파라미터 바인딩, CSP, CSRF 토큰 |
-| 데이터 | 정보 유출 | 암호화(at-rest, in-transit), 개인정보 마스킹 |
-| 의존성 | 취약한 라이브러리 | 자동 스캔 (Snyk / Dependabot), 정기 업데이트 |
-| [추가 계층] | [위협] | [대응] |
+| 계층 | 담당 | 방법 |
+|------|------|------|
+| 네트워크 | Vercel·Supabase | TLS, DDoS 기본 방어 |
+| 애플리케이션 | 미들웨어·Route Handler | 토큰 검증, 권한 검사, 입력 검증, 요청 제한 |
+| 데이터 | PostgreSQL | RLS(클라이언트 직접 접근 차단), CHECK·UNIQUE 제약 |
+| 저장소 | Supabase Storage | 학생증 비공개 버킷 + 처리 즉시 삭제, 사진 경로는 UUID |
 
 #### 데이터 암호화
 
-| 대상 | 암호화 방식 | 알고리즘 / 키 관리 |
-|------|-------------|-------------------|
-| 전송 중 데이터 | TLS 1.3 | 인증서 자동 갱신 (ACM / Let's Encrypt) |
-| 저장 데이터 | AES-256-GCM | [KMS / Vault] 키 관리 |
-| 비밀번호 | 단방향 해시 | bcrypt (cost factor [12]) |
-| 민감 정보 (PII) | 필드 레벨 암호화 | [KMS / 자체 키] |
-| [추가 대상] | [방식] | [상세] |
+| 대상 | 방식 |
+|------|------|
+| 전송 | TLS 1.2 이상 |
+| 저장 (DB·파일) | Supabase 기본 디스크 암호화 (AES-256) |
+| Refresh Token·인증번호 | SHA-256 / HMAC 해시만 저장 |
+| 학번·차단용 식별자 | HMAC-SHA256 (`IDENTIFIER_HASH_SECRET`) |
+| 학생증 원본 | 비공개 버킷, 처리 즉시 삭제, 백업 제외 |
 
 ### 6.3 확장성 (Scalability)
 
 #### 수평 확장 전략
 
-| 컴포넌트 | 확장 방식 | 상세 |
-|----------|-----------|------|
-| API Server | 수평 확장 (Scale-Out) | 오토스케일링, Stateless 설계 |
-| Worker | 수평 확장 | 메시지 큐 기반 작업 분배 |
-| Database | 읽기 확장 (Read Replica) | 쓰기: Primary, 읽기: Replica |
-| Cache | 클러스터 확장 | Redis Cluster / Sentinel |
-| [추가 컴포넌트] | [방식] | [상세] |
+| 구성 요소 | 방식 | 한계·다음 단계 |
+|-----------|------|---------------|
+| Next.js API | Vercel 함수 자동 확장 (무상태) | 요청 수 증가 시 자동 |
+| DB | 단일 인스턴스 + 연결 풀 | 10배 규모(NFR-009)까지 인스턴스 크기 상향으로 대응, 이후 읽기 복제본 |
+| Realtime | Supabase 관리 | 동시 연결 한도는 플랜 상향 |
+| 설정값 | `app_settings` | 숙대 기준 위치·동네·분류 문구를 코드 수정 없이 변경 |
 
 #### 오토스케일링 정책
 
-| 지표 | 임계값 | Scale-Out | Scale-In | 쿨다운 |
-|------|--------|-----------|----------|--------|
-| CPU 사용률 | [70%] | +[N]대 | -[N]대 | [300초] |
-| 메모리 사용률 | [80%] | +[N]대 | -[N]대 | [300초] |
-| 요청 수 (RPS) | [N건/초] | +[N]대 | -[N]대 | [300초] |
-| 최소 인스턴스 | [N]대 | - | - | - |
-| 최대 인스턴스 | [N]대 | - | - | - |
+해당 없음 (관리형 서비스가 자동 확장). 비용 급증을 막기 위해 Vercel 사용량 알림과 Supabase 사용량 알림을 켠다.
 
 ### 6.4 가용성 (Availability)
 
 #### 가용성 목표
 
-| 항목 | 목표 | 허용 다운타임 (연간) |
-|------|------|---------------------|
-| 전체 시스템 | [99.9% / 99.95% / 99.99%] | [8.76시간 / 4.38시간 / 52.6분] |
-| API 서비스 | [목표] | [다운타임] |
-| 데이터베이스 | [목표] | [다운타임] |
+| 항목 | 목표 | 근거 |
+|------|------|------|
+| 월간 가용성 | 99.5% (초안) | NFR-007, 관리형 서비스 SLA |
+| RPO / RTO | 24시간 / 4시간 | NFR-008, DB 설계서 7장 |
+| 계획 점검 | 새벽 2~5시 KST, 사전 공지, 503 + 종료 예정 시각 | NFR-007 |
 
 #### 이중화 구성
 
-| 컴포넌트 | 이중화 방식 | 페일오버 시간 |
-|----------|-------------|---------------|
-| API Server | Active-Active (다중 인스턴스) | 즉시 (로드 밸런서) |
-| Database | Primary-Replica (Streaming Replication) | [< N초, 자동 페일오버] |
-| Cache (Redis) | Sentinel / Cluster | [< N초] |
-| Message Queue | Mirrored Queue / Replication | [< N초] |
-| Load Balancer | [이중화 방식] | [페일오버 시간] |
+해당 없음 (MVP). Vercel은 여러 지점에서 정적 파일을 제공하고, 함수·DB는 서울 단일 리전이다.
 
-#### 장애 복구 (DR - Disaster Recovery)
+#### 장애 복구 (DR)
 
-| 항목 | 내용 |
+| 장애 | 대응 |
 |------|------|
-| RPO (Recovery Point Objective) | [N시간] - 최대 허용 데이터 손실 시간 |
-| RTO (Recovery Time Objective) | [N시간] - 최대 허용 복구 시간 |
-| DR 전략 | [Pilot Light / Warm Standby / Multi-Site Active-Active] |
-| DR 사이트 | [리전 / 가용 영역] |
-| 복구 절차 | [별도 DR 절차서 참조 또는 개요 기술] |
-| DR 훈련 주기 | [분기 1회 / 반기 1회] |
+| 잘못된 배포 | Vercel 이전 배포로 즉시 되돌림 |
+| DB 데이터 손상 | 일일 백업 복원 (DB 설계서 7.3) |
+| 외부 서비스 장애 | 2.3 표의 대체 동작 |
+| 키 유출 | 4.5 S-8 절차 |
 
 #### 헬스체크 구성
 
-| 대상 | 엔드포인트 | 주기 | 타임아웃 | 실패 기준 |
-|------|-----------|------|----------|-----------|
-| API Server | `/health` | [30초] | [5초] | [연속 3회 실패] |
-| Database | TCP 연결 확인 | [30초] | [5초] | [연속 3회 실패] |
-| Redis | `PING` 명령 | [15초] | [3초] | [연속 3회 실패] |
-| 외부 서비스 | [엔드포인트] | [60초] | [10초] | [연속 N회 실패] |
+| 엔드포인트 | 확인 내용 | 주기 |
+|-----------|-----------|------|
+| `GET /api/health` | 앱 응답 | 외부 업타임 모니터 5분 (무료 서비스, 초안) |
+| `GET /api/health/db` | DB 쿼리 1회 (`select 1`) | 5분 |
+| pg_cron 작업 결과 | `cron.job_run_details` 실패 여부 | 매일 운영자 확인, 실패 시 Sentry 알림 |
+
+오류율 급증(5분간 5xx 5% 이상) 시 Sentry 알림을 운영자(이유나) 이메일로 보낸다 (NFR-008 장애 감지).
 
 ---
 
@@ -780,84 +895,77 @@ flowchart LR
 
 ### 7.1 API Gateway 패턴
 
-| 항목 | 내용 |
+별도 API Gateway 제품은 쓰지 않는다. Next.js 미들웨어와 공통 Route Handler 래퍼가 그 역할을 한다.
+
+| 기능 | 담당 |
 |------|------|
-| 도구 | [Kong / AWS API Gateway / Nginx / Traefik] |
-| 라우팅 | URL 경로 기반 서비스 라우팅 |
-| 인증 | JWT 검증, API Key 인증 |
-| Rate Limiting | IP/사용자별 요청 제한 |
-| CORS | [허용 Origin 정책] |
-| 요청/응답 변환 | 헤더 추가, 바디 변환 |
-| 로깅 | 요청/응답 로깅 (민감 정보 마스킹) |
-| 서킷 브레이커 | [임계값 및 정책] |
+| 인증 | 미들웨어가 Access Token을 검증해 사용자 ID를 요청에 붙임 |
+| 인가 | Route Handler 래퍼 `withPolicy(level)` |
+| 요청 제한 | 래퍼 `withRateLimit(key, limit)` (DB 카운터) |
+| 입력 검증·오류 형식 | 래퍼 `withSchema(zod)` + 공통 오류 변환 (API 설계서 3.3) |
+| 버전 | 경로 `/api/v1` |
 
 #### API Gateway 라우팅 규칙
 
-| 경로 패턴 | 대상 서비스 | 인증 | Rate Limit |
-|-----------|-------------|------|------------|
-| `/api/v1/auth/**` | Auth Service | 불필요 (일부) | [N req/min] |
-| `/api/v1/users/**` | API Server | Bearer Token | [N req/min] |
-| `/api/v1/posts/**` | API Server | Bearer Token | [N req/min] |
-| `/api/v1/files/**` | File Service | Bearer Token | [N req/min] |
-| `/api/v1/admin/**` | API Server | Bearer Token + Admin Role | [N req/min] |
-| [추가 경로] | [서비스] | [인증] | [제한] |
+| 경로 | 대상 | 인증 |
+|------|------|------|
+| `/api/v1/auth/*` | `auth` 모듈 | 없음 / Refresh 쿠키 |
+| `/api/v1/posts*`, `/favorites`, `/drafts/*`, `/uploads/*` | `posts`·`favorites`·`media` | 단계별 (API 설계서 2.4) |
+| `/api/v1/chat-rooms*` | `chat` | 정회원 (권한 제한은 조회만) |
+| `/api/v1/admin/*` | 관리자 서비스 | `role = ADMIN` |
+| `/api/internal/jobs/*` | 예약 작업 | `CRON_SECRET` 헤더, 외부 공개 안 함 |
+| `/api/health*` | 헬스체크 | 없음 |
 
 ### 7.2 메시지 큐 패턴
 
-| 항목 | 내용 |
-|------|------|
-| 도구 | [RabbitMQ / Apache Kafka / AWS SQS] |
-| 용도 | 비동기 작업 처리, 서비스 간 디커플링 |
-| 메시지 포맷 | JSON (스키마 버전 포함) |
-| 재시도 정책 | [최대 N회, 지수 백오프] |
-| Dead Letter Queue | [DLQ 구성 및 모니터링] |
+별도 메시지 큐(RabbitMQ·Kafka)는 쓰지 않는다. 비동기 작업은 DB 테이블 + pg_cron 작업으로 처리한다.
 
-#### 큐/토픽 목록
+| 작업 | 저장 위치 | 처리 | 주기 |
+|------|-----------|------|------|
+| 푸시 발송 | `notifications` (`push_status = QUEUED/DEFERRED`) | `POST /api/internal/jobs/push` | 매분 + API 응답 직후 즉시 시도 |
+| 관심 매물 묶음 (10분 3건) | `notifications.group_key` | 같은 작업 안에서 묶어 1건 발송, 나머지 `MERGED` | 매분 |
+| 메일 발송 (재인증·제재 안내) | `notifications` (이메일 채널 표시) | 같은 작업 | 매분 |
 
-| 큐/토픽 이름 | 용도 | Producer | Consumer | 메시지 예시 |
-|-------------|------|----------|----------|-------------|
-| `email.send` | 이메일 발송 | API Server | Notification Worker | `{ "to": "...", "template": "...", "data": {...} }` |
-| `file.process` | 파일 처리 (리사이징 등) | API Server | File Worker | `{ "fileId": "...", "operations": [...] }` |
-| `notification.push` | 푸시 알림 | API Server | Notification Worker | `{ "userId": "...", "title": "...", "body": "..." }` |
-| `audit.log` | 감사 로그 기록 | All Services | Audit Worker | `{ "action": "...", "userId": "...", "resource": "..." }` |
-| [추가 큐/토픽] | [용도] | [Producer] | [Consumer] | [메시지 구조] |
+#### 큐/토픽 목록 (예약 작업)
+
+| 작업 | 시각 (KST) | 내용 | 관련 FR |
+|------|-----------|------|---------|
+| `push` | 매분 | 대기 푸시·메일 발송, 08:00에 야간 지연분 발송 | FR-020, FR-021 |
+| `daily-visibility` | 매일 00:00 | 거래완료·구함완료 30일 숨김, 재인증 마감 다음 날 권한 제한 + 글 비공개, 졸업 1년 만료, 7일 정지 해제 | FR-005, FR-012, FR-019 |
+| `daily-reminders` | 매일 09:00 | 재인증 안내(기간 시작일·마감 7일 전·1일 전), 졸업 만료 30·7일 전, 방치 글(60일)·구함 글(입주 희망일 + 14일) 확인 알림, 무응답 7일 숨김 | FR-005, FR-011, FR-012 |
+| `daily-purge` | 매일 00:30 | 보존 기간 지난 데이터 파기 (DB 설계서 7.5) | SRS 6.3 |
+| `hourly-cleanup` | 매시 | 요청 제한 카운터·만료 업로드 정리 | - |
+| `weekly-kpi` | 월요일 03:00 | KPI 집계 (문의 비율, 거래완료 비율, 신고 숨김 비율) | FR-024 |
 
 #### 메시지 포맷 표준
 
+푸시 페이로드 (FCM):
+
 ```json
 {
-  "id": "[UUID - 메시지 고유 ID]",
-  "type": "[이벤트 타입, 예: email.send]",
-  "version": "[메시지 스키마 버전, 예: 1.0]",
-  "timestamp": "[ISO 8601 형식]",
-  "source": "[발행 서비스명]",
-  "data": {
-    "[메시지 타입별 페이로드]": "..."
-  },
-  "metadata": {
-    "correlationId": "[요청 추적 ID]",
-    "userId": "[요청자 ID, 해당 시]"
-  }
+  "notification": { "title": "관심 조건 새 매물", "body": "원룸 · 월세 500/45 · 청파동 · 도서관 후문 근처" },
+  "data": { "notificationId": "8c1e…", "type": "INTEREST_MATCH", "link": "/posts/3f2a…" }
 }
 ```
 
+푸시 본문에는 닉네임 외 개인정보(실명·이메일·주소)를 넣지 않는다. 채팅 푸시 본문은 메시지 앞 40자까지, 사진은 "사진을 보냈어요".
+
 ### 7.3 이벤트 버스 패턴
 
-| 항목 | 내용 |
-|------|------|
-| 적용 여부 | [사용 / 미사용] |
-| 도구 | [Kafka / EventBridge / NATS] |
-| 이벤트 저장소 | [이벤트 소싱 적용 여부] |
-| 이벤트 스키마 레지스트리 | [사용 시 도구명] |
+별도 이벤트 버스는 쓰지 않는다. 도메인 이벤트는 같은 프로세스 안에서 서비스 함수 호출로 처리하고, 오래 걸리거나 실패할 수 있는 후속 작업(푸시·메일)만 아웃박스로 넘긴다.
 
 #### 도메인 이벤트 목록
 
-| 이벤트명 | 도메인 | 발행 조건 | 구독자 | 데이터 |
-|----------|--------|-----------|--------|--------|
-| `UserRegistered` | User | 회원 가입 완료 시 | Notification, Analytics | `{ userId, email, registeredAt }` |
-| `OrderCreated` | Order | 주문 생성 시 | Payment, Inventory, Notification | `{ orderId, userId, items, totalAmount }` |
-| `PaymentCompleted` | Payment | 결제 완료 시 | Order, Notification | `{ paymentId, orderId, amount, method }` |
-| [추가 이벤트] | [도메인] | [조건] | [구독자] | [데이터] |
+| 이벤트 | 발생 | 후속 처리 |
+|--------|------|-----------|
+| `PostPublished` | 글 작성, 재인증·신고 검토 후 재공개 | 관심 조건 매칭 → 알림 (FR-021) |
+| `PostPriceCut` | 가격 인하 수정 | "가격 인하" 3일 표시, 찜한 사용자 알림(하루 1회), 새로 일치한 관심 조건 1회 알림 |
+| `PostStatusChanged` | 예약중·거래완료 | 찜한 사용자 알림, 채팅방 시스템 메시지 |
+| `MessageSent` | 채팅 메시지 저장 | Realtime 전달(자동), 상대가 방을 안 보고 있으면 푸시(1분 묶음) |
+| `VerificationReviewed` | 학생증 승인·반려 | 원본 삭제, 상태 전이, 알림, 재인증 승인 시 비공개 글 재공개 |
+| `ReportThresholdReached` | 신고 3건 | 글 숨김, 작성자 알림, 관리자 대기열 맨 위 |
+| `UserSanctioned` | 정지·영구 정지 | 세션 폐기, 글 비공개·숨김, 관심 조건 알림 중지, 영구 정지 시 식별자 차단 등록 |
+| `UserWithdrew` | 탈퇴 | 카카오 연결 끊기, 세션 폐기, 글 숨김, 식별자 30일 차단 |
 
 ---
 
@@ -865,32 +973,58 @@ flowchart LR
 
 ### A. 다이어그램 목록
 
-| 다이어그램 | 섹션 | 용도 |
+| 다이어그램 | 위치 | 설명 |
 |-----------|------|------|
-| 시스템 컨텍스트 다이어그램 | 2.3 | 외부 시스템 연동 전체 뷰 |
-| 컨테이너 다이어그램 | 2.4 | 시스템 내부 구성 요소 |
-| 컴포넌트 다이어그램 | 2.5 | API Server 내부 모듈 |
-| 배포 다이어그램 | 4.1 | 인프라 배포 구조 |
-| CI/CD 파이프라인 | 4.3 | 빌드/배포 프로세스 |
-| 인증 플로우 | 6.2 | 인증/인가 흐름 |
+| 시스템 컨텍스트 | 2.3 | 사용자·외부 시스템과의 경계 |
+| 컨테이너 | 2.4 | 앱·Next.js·Supabase 구성 |
+| 컴포넌트 | 2.5 | Next.js 내부 도메인 모듈 |
+| 배포 | 4.1 | GitHub → Vercel·Supabase·앱 스토어 |
+| CI/CD | 4.3 | PR 검사와 배포 단계 |
+| 인증 시퀀스 | 6.2 | 카카오 OAuth + 자체 토큰 |
 
 ### B. 기술 스택 요약
 
 | 계층 | 기술 |
 |------|------|
-| 프론트엔드 | [기술 목록] |
-| 백엔드 | [기술 목록] |
-| 데이터베이스 | [기술 목록] |
-| 인프라 | [기술 목록] |
-| 모니터링 | [기술 목록] |
-| CI/CD | [기술 목록] |
+| 앱 | Next.js 15 (App Router) 모바일 웹앱 + Capacitor 6 (iOS·Android), Tailwind CSS(DESIGN.md 토큰), TanStack Query, React Hook Form + Zod |
+| API | Next.js Route Handlers (Node.js 20, Vercel 서울), Zod, jose, sharp |
+| 데이터 | Supabase PostgreSQL 15 (서울), Storage, Realtime, pg_cron |
+| 외부 연동 | 카카오 로그인·로컬 API·지도 SDK, 우편번호 검색 화면, FCM(APNs), Resend(초안), Google Cloud Vision OCR(초안) |
+| 운영 | GitHub Actions(lint·test·gitleaks), Vercel, Sentry, 업타임 모니터 |
 
-### C. 관련 문서 링크
+### C. 요구사항 대응 요약 (NFR → 설계)
+
+| NFR | 대응 위치 |
+|-----|-----------|
+| NFR-001 응답 시간 | 6.1, DB 설계서 6.4 |
+| NFR-002 동시 사용자 | 6.1, 6.3 |
+| NFR-003 실시간 채팅·푸시 | ADR-004, ADR-006, 7.2 |
+| NFR-004 인증·인가 | ADR-003, 6.2, API 설계서 2장·7장 |
+| NFR-005 데이터 보호 | ADR-005, 4.5, 6.2 |
+| NFR-006 감사 로깅 | 2.5 `audit`, DB 설계서 `audit_logs` |
+| NFR-007·008 가용성·백업 | 6.4, DB 설계서 7장 |
+| NFR-009 확장 | 6.3, `app_settings` |
+| NFR-010 기기 호환 | ADR-001, 화면 설계서 1.3 |
+| NFR-011 코드 품질 | 4.3 CI, 4.4 구조 |
+| NFR-012 접근성·디자인 | 화면 설계서 1.2·7장 |
+
+### D. 미결 사항
+
+| ID | 내용 | 담당 | 제안 |
+|----|------|------|------|
+| DEC-010 | 앱 구현 방식 (ADR-001) | 이유나 | Next.js 웹앱 + Capacitor (확인 요청 중) |
+| SAD-Q1 | 서비스 도메인 | 이유나 | 출시 전 결정 |
+| SAD-Q2 | 메일 발송 서비스가 `@sookmyung.ac.kr`로 잘 도착하는지 (DEP-001) | 구현 초기 | 실제 학교 메일로 시험. 스팸함으로 가면 발신 도메인 인증(SPF·DKIM) 설정 |
+| SAD-Q3 | 카카오톡 앱 간편 로그인이 Capacitor 웹뷰에서 동작하는지 | 상세 설계 | 안 되면 카카오 계정 로그인 화면(웹)으로 진행, 또는 카카오 SDK 네이티브 플러그인 검토 |
+| SAD-Q4 | OCR 업체·비용 | 구현 초기 | Google Cloud Vision 무료 구간으로 시작 |
+| DB-Q3 | 운영 Supabase Pro 플랜 (백업) | 이유나 | 실제 사용자 받기 전 전환 |
+
+### E. 관련 문서 링크
 
 | 문서 | 경로 |
 |------|------|
-| 요구사항 정의서 | [경로] |
-| 데이터베이스 설계서 | [경로] |
-| API 설계서 | [경로] |
-| 화면 설계서 | [경로] |
-| 상세 설계서 | [경로] |
+| 데이터베이스 설계서 | [데이터베이스설계서.md](데이터베이스설계서.md) |
+| API 설계서 | [API설계서.md](API설계서.md) |
+| 화면 설계서 | [화면설계서.md](화면설계서.md) |
+| 요구사항 명세서 | [../01-요구사항분석/요구사항명세서-SRS.md](../01-요구사항분석/요구사항명세서-SRS.md) |
+| 상세 설계서 | [../03-상세설계/상세설계서.md](../03-상세설계/상세설계서.md) (다음 단계) |
