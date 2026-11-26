@@ -1,0 +1,24 @@
+# 비밀 정보: 실제 키가 든 환경 변수 파일은 올리지 않는다 (SAD 4.5)
+.env
+.env.*
+!.env.example
+
+# 나중에 앱 포장(Capacitor)할 때 쓰는 Firebase 설정 파일
+google-services.json
+GoogleService-Info.plist
+
+# Supabase 로컬 작업 파일
+supabase/.temp/
+supabase/.branches/
+
+# Next.js / Node
+node_modules/
+.next/
+out/
+.vercel/
+*.tsbuildinfo
+next-env.d.ts
+npm-debug.log*
+
+# OS
+.DS_Store
