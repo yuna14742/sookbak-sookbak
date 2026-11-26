@@ -3,7 +3,7 @@
 .env.*
 !.env.example
 
-# 앱 포장(Capacitor)용 Firebase 설정 파일
+# 나중에 앱 포장(Capacitor)할 때 쓰는 Firebase 설정 파일
 google-services.json
 GoogleService-Info.plist
 

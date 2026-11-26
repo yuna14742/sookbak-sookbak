@@ -589,13 +589,14 @@ sookbak-sookbak/
 | `NEXT_PUBLIC_KAKAO_JS_KEY` | 공개 (도메인 제한) | 카카오 지도 SDK |
 | `RESEND_API_KEY`, `MAIL_FROM` | **서버 전용** | 메일 발송 |
 | `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` | **서버 전용** | FCM 발송 |
+| `NEXT_PUBLIC_FIREBASE_API_KEY`, `…_PROJECT_ID`, `…_MESSAGING_SENDER_ID`, `…_APP_ID`, `…_VAPID_KEY` | 공개 가능 | 웹 푸시 토큰 발급 (화면·서비스 워커). 공개 값이지만 저장소에는 올리지 않고 환경 변수로 넣는다 |
 | `GOOGLE_VISION_API_KEY` | **서버 전용** | OCR |
 | `IDENTIFIER_HASH_SECRET` | **서버 전용** | 학번·이메일·카카오 회원번호 HMAC (DB 설계서 `banned_identifiers`) |
 | `EMAIL_CODE_HASH_SECRET` | **서버 전용** | 인증번호 HMAC |
 | `CRON_SECRET` | **서버 전용** | 내부 작업 API 호출 확인 |
 | `SENTRY_DSN` | 공개 | 오류 추적 (DSN은 공개 가능) |
 
-앱 포장 쪽 파일(`google-services.json`, `GoogleService-Info.plist`)도 `.gitignore`에 넣고 빌드 담당자 기기에서만 관리한다.
+나중에 앱으로 포장할 때 생기는 파일(`google-services.json`, `GoogleService-Info.plist`)도 미리 `.gitignore`에 넣어 두었다.
 
 ---
 
