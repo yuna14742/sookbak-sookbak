@@ -30,7 +30,7 @@
 
 | 구분 | 내용 |
 |------|------|
-| **대상 시스템** | 숙박숙박 모바일 앱(iOS·Android, 같은 코드로 웹), API 서버, 관리자 화면, 실시간 채팅, 예약 작업 |
+| **대상 시스템** | 숙박숙박 모바일 웹앱(PWA), API 서버, 관리자 화면, 실시간 채팅, 예약 작업 |
 | **포함 범위** | SRS FR-001~FR-025 (P1, MVP) 구현에 필요한 아키텍처, NFR-001~012 대응 설계, 외부 연동(카카오 로그인, 메일, 푸시, 주소·지도, OCR) |
 | **제외 범위** | FR-026~029(P2·P3)의 상세 설계(확장 지점만 표시), 결제·송금·에스크로(어떤 버전에도 없음, EX-001), 지도 중심 탐색(EX-003), 다른 학교 확장(NFR-009) |
 | **대상 독자** | 기획 책임자(이유나), 구현 담당(AI 보조 개발 포함), 테스트·운영 담당 |
@@ -51,7 +51,7 @@
 
 | 버전 | 날짜 | 작성자 | 변경 내용 |
 |------|------|--------|-----------|
-| v0.1 | 2026-11-26 | 이유나 / Claude | 초안 작성. 앱 구현 방식(DEC-010)을 Next.js 웹앱 + Capacitor 앱 포장으로 제안(ADR-001, 사용자 확인 대기), 백엔드 Next.js Route Handlers + Supabase(ADR-002), 카카오 로그인 + 자체 토큰(ADR-003), 비밀 정보 관리 규칙(4.5) |
+| v0.1 | 2026-11-26 | 이유나 / Claude | 초안 작성. 앱 구현 방식(DEC-010)을 Next.js 모바일 웹앱(PWA)으로 결정(ADR-001, 이유나 2026-11-26 승인, 앱 포장은 나중에 검토), 백엔드 Next.js Route Handlers + Supabase(ADR-002), 카카오 로그인 + 자체 토큰(ADR-003), 비밀 정보 관리 규칙(4.5) |
 | v1.0 | [미정] | 이유나 | G2 검토 후 최종 승인 |
 
 ### 1.5 용어 정의
@@ -61,11 +61,12 @@
 | SAD / ADR | 시스템 아키텍처 설계서 / 아키텍처 결정 기록 |
 | Next.js App Router | React 기반 풀스택 프레임워크. 화면(서버·클라이언트 컴포넌트)과 API(Route Handlers)를 한 저장소에서 만든다 |
 | Route Handler | Next.js의 서버 API 파일 (`src/app/api/v1/**/route.ts`) |
-| Capacitor | 웹앱을 iOS·Android 앱으로 포장하는 도구. 푸시 등 기기 기능을 플러그인으로 쓴다 |
+| PWA | Progressive Web App. 웹사이트를 홈 화면에 추가해 앱처럼 실행하고 웹 푸시를 받는 방식 |
+| Capacitor | 웹앱을 iOS·Android 앱으로 포장하는 도구. 지금은 쓰지 않고 나중에 앱 스토어 출시가 필요할 때 검토한다 (ADR-001) |
 | PWA | 홈 화면에 설치할 수 있는 웹앱 |
 | Supabase | PostgreSQL·파일 저장소·실시간 연결·예약 작업을 제공하는 관리형 서비스 |
 | RLS | Row Level Security. DB가 행 단위로 접근을 막는 기능 |
-| FCM / APNs | Firebase Cloud Messaging / Apple Push Notification service (앱 푸시) |
+| FCM / 웹 푸시 | Firebase Cloud Messaging. 브라우저 표준 웹 푸시(Push API·서비스 워커)로 알림을 보낸다 |
 | OCR | 사진 속 글자 인식. 채팅 사진의 계좌번호 검사에 쓴다 |
 | 아웃박스 | 보낼 알림을 먼저 DB에 쓰고 별도 작업이 읽어 발송하는 방식 |
 | 환경 변수 | 코드 밖에서 주입하는 설정값. API 키 등 비밀값은 여기에만 둔다 |
@@ -81,7 +82,7 @@
 
 **모듈형 모놀리스 (Next.js 풀스택 단일 애플리케이션) + 관리형 백엔드 서비스(Supabase)**
 
-화면과 API를 하나의 Next.js 애플리케이션으로 만들고, 내부는 도메인 모듈(인증, 글, 채팅, 알림, 관리자 등)로 나눈다. DB·파일 저장소·실시간 연결·예약 작업은 Supabase 관리형 서비스를 쓴다. 같은 웹 코드를 Capacitor로 감싸 iOS·Android 앱을 만든다 (ADR-001).
+화면과 API를 하나의 Next.js 애플리케이션으로 만들고, 내부는 도메인 모듈(인증, 글, 채팅, 알림, 관리자 등)로 나눈다. DB·파일 저장소·실시간 연결·예약 작업은 Supabase 관리형 서비스를 쓴다. 지금은 모바일 브라우저와 홈 화면 추가(PWA)로 쓰고, 앱 스토어 출시는 나중에 필요할 때 검토한다 (ADR-001).
 
 #### 후보 아키텍처 스타일 비교
 
@@ -91,7 +92,8 @@
 | 저장소 AGENTS.md(Next.js)와 맞음 | 맞음 | 부분 | 부분 (API만 Next.js) |
 | 운영 복잡도 | 낮음 (Vercel + Supabase) | 높음 | 중간 |
 | 확장성 (가입자 1만 명, NFR-009) | 충분 (무상태 서버 수평 확장) | 높음 (과함) | 충분 |
-| 앱 푸시·앱 스토어 배포 | Capacitor로 가능 | 별도 | 가장 자연스러움 |
+| 푸시 알림 | 웹 푸시 (iOS는 홈 화면 추가 필요) | 별도 | 가장 자연스러움 |
+| 앱 스토어 비용·심사 | 없음 | 없음 | 필요 (Apple 연간, Google 1회) |
 | 비용 (무료~저비용, SRS 7.3) | 낮음 | 높음 | 중간 |
 | 코드 벌 수 | 1벌 | 여러 벌 | 2벌 (앱 + 서버) |
 
@@ -99,7 +101,7 @@
 
 1. 규모: 가입자 1,000명·글 300건(3개월 가설)은 단일 애플리케이션과 단일 DB로 충분하다. 서비스를 쪼갤 이유가 없다.
 2. 저장소 정합: 저장소 AGENTS.md가 Next.js 개발 서버(`npm run dev`)를 전제로 한다.
-3. 코드 한 벌: 화면·API·관리자 화면을 TypeScript 하나로 만들고, 같은 화면 코드를 웹과 앱에 쓴다. AI 보조 개발에서 맥락을 한곳에 둘 수 있다.
+3. 코드 한 벌: 화면·API·관리자 화면을 TypeScript 하나로 만들고, 나중에 앱으로 포장하더라도 같은 화면 코드를 쓴다. AI 보조 개발에서 맥락을 한곳에 둘 수 있다.
 4. 관리형 서비스: DB 백업, 파일 저장소, WebSocket 실시간 연결, 예약 작업을 직접 운영하지 않는다.
 
 ### 2.2 아키텍처 원칙
@@ -134,9 +136,8 @@ graph TB
         POSTCODE["우편번호 검색 화면<br/>(주소 고르기)"]
         KMAP["카카오 지도 SDK"]
         MAIL["메일 발송 API"]
-        FCM["FCM → APNs<br/>(앱 푸시)"]
+        FCM["FCM<br/>(웹 푸시)"]
         OCR["OCR API<br/>(채팅 사진 계좌번호)"]
-        STORE["앱 스토어<br/>(App Store·Google Play)"]
     end
 
     GUEST -->|HTTPS| SYS
@@ -150,7 +151,6 @@ graph TB
     SYS --> OCR
     SYS -.->|앱 화면에서 직접| POSTCODE
     SYS -.->|앱 화면에서 직접| KMAP
-    STORE -.->|앱 배포| SYS
 ```
 
 | 외부 시스템 | 용도 | 연동 방향 | 장애 시 동작 (SRS 5.3) |
@@ -160,7 +160,7 @@ graph TB
 | 우편번호 검색 화면 | 주소 검색·선택 UI (키 불필요) | 앱 화면에 삽입 | 재시도 안내 |
 | 카카오 지도 SDK | 상세 대략 위치 지도 (원 + 숙대 위치) | 앱 화면 → 카카오 | 지도 대신 동네 이름·숙대 기준 위치 텍스트 |
 | 메일 발송 API | 학교 메일 인증번호, 재인증·만료·제재 안내 | 서버 → 메일 서비스 | "메일을 보내지 못했어요" 안내 |
-| FCM (→ APNs) | 앱 푸시 (iOS는 FCM이 APNs로 전달) | 서버 → FCM | 인앱 알림 목록에는 항상 남김 |
+| FCM | 웹 푸시 (서비스 워커가 받음. iOS는 16.4 이상 + 홈 화면 추가 시) | 서버 → FCM → 브라우저 | 인앱 알림 목록에는 항상 남김 |
 | OCR API | 채팅 사진 속 계좌번호 검사 | 서버 → OCR | 사진은 보내고 "송금 요구" 신고로 보완 (초안) |
 
 ### 2.4 컨테이너 다이어그램
@@ -168,8 +168,8 @@ graph TB
 ```mermaid
 graph TB
     subgraph "사용자 기기"
-        APP["iOS·Android 앱<br/>(Capacitor 웹뷰 + 푸시 플러그인)"]
-        WEB["모바일 브라우저 / PWA"]
+        APP["홈 화면 추가 PWA<br/>(서비스 워커 + 웹 푸시)"]
+        WEB["모바일 브라우저"]
         ADMINW["관리자 브라우저<br/>(데스크톱)"]
     end
 
@@ -202,8 +202,8 @@ graph TB
 
 | 컨테이너 | 책임 | 기술 | 통신 |
 |----------|------|------|------|
-| iOS·Android 앱 | 웹 화면을 앱으로 실행, 푸시 수신·토큰 등록, 사진 선택·카메라 | Capacitor 6, 플러그인 `@capacitor/push-notifications`, `@capacitor/camera` | HTTPS, WSS |
-| 모바일 웹 / PWA | 같은 화면을 브라우저에서 (앱 설치 전 구경, 공유 링크) | Next.js 화면 | HTTPS, WSS |
+| 홈 화면 추가 PWA | 전체 화면 실행, 웹 푸시 수신·토큰 등록, 사진 선택(`<input type="file" accept="image/*">`로 카메라·앨범) | Next.js 화면 + `manifest.webmanifest` + 서비스 워커, Firebase JS SDK(메시징) | HTTPS, WSS |
+| 모바일 브라우저 | 같은 화면을 브라우저에서 (공유 링크, 홈 화면 추가 전) | Next.js 화면 | HTTPS, WSS |
 | Next.js 애플리케이션 | 화면 렌더링, REST API, 권한 검사, 비즈니스 규칙, 외부 API 호출, 관리자 화면 | Next.js 15 App Router, TypeScript, Node.js 20 런타임 | HTTPS |
 | 미들웨어 | Access Token 확인 후 요청에 사용자 정보 첨부, 관리자 경로 차단, 보안 헤더 | Next.js Middleware | 내부 |
 | 내부 작업 API | 재인증·만료·자동 숨김·파기 배치, 푸시 발송, 관심 매물 묶음 발송 | Route Handlers (공개 경로 아님, `CRON_SECRET` 필요) | HTTPS |
@@ -316,7 +316,7 @@ graph TB
 
 | 기준 | 가중치 | 설명 |
 |------|--------|------|
-| 요구사항 충족 | 30% | 앱 푸시(NFR-003·FR-021), 실시간 채팅 1초(NFR-001), 앱 스토어 배포, 모바일 우선 |
+| 요구사항 충족 | 30% | 푸시(NFR-003·FR-021), 실시간 채팅 1초(NFR-001), 모바일 우선 |
 | 개발 생산성 | 25% | 1인 + AI 보조 개발, 수업 일정 (DEC-006) |
 | 저장소·기존 결정 정합 | 15% | AGENTS.md(Next.js, TypeScript 우선) |
 | 비용 | 15% | 무료 또는 저비용 관리형 서비스 우선 (SRS 7.3) |
@@ -335,7 +335,7 @@ graph TB
 | 스타일 | Tailwind CSS (DESIGN.md 토큰을 테마로 등록) | 4.x | 토큰 외 임의 HEX 금지. 컴포넌트별 스타일은 같은 폴더에 |
 | 서버 데이터 | TanStack Query | 5.x | 목록 캐시·무한 스크롤·재시도(1·2·4초, FR-025) |
 | 폼 | React Hook Form + Zod | 7.x / 3.x | 클라이언트·서버가 같은 Zod 스키마 공유 |
-| 앱 포장 | Capacitor | 6.x | iOS·Android, 푸시·카메라 플러그인 |
+| PWA | Web App Manifest + 서비스 워커 (`public/sw.js`), Firebase JS SDK 메시징 | - / 11.x | 홈 화면 추가, 웹 푸시. 앱 포장(Capacitor)은 나중에 검토 |
 | 실시간 | `@supabase/supabase-js` Realtime | 2.x | 채팅 구독만 |
 | 지도 | 카카오 지도 JavaScript SDK | - | 상세 대략 위치 (도메인 제한 키) |
 | 서체 | Pretendard (자체 호스팅, 400·700) | - | DESIGN.md |
@@ -343,15 +343,15 @@ graph TB
 
 #### 평가 상세
 
-| 기준 | Next.js 웹앱 + Capacitor | React Native (Expo) | Flutter |
+| 기준 | Next.js 모바일 웹앱(PWA) | React Native (Expo) | Flutter |
 |------|-------------------------|---------------------|---------|
-| 요구사항 충족 (30%) | 4 — 앱 푸시·스토어 배포 가능, 웹뷰라 네이티브보다 약간 느림 | 5 | 5 |
+| 요구사항 충족 (30%) | 4 — 웹 푸시 가능, iOS는 홈 화면 추가가 필요해 알림 도달률이 낮을 수 있음 | 5 | 5 |
 | 개발 생산성 (25%) | 5 — 화면·API 한 벌, 웹 개발 도구 그대로 | 4 | 3 (Dart) |
 | 저장소 정합 (15%) | 5 — AGENTS.md Next.js | 2 | 1 |
-| 비용 (15%) | 5 | 5 | 5 |
-| 운영 부담 (10%) | 4 — 웹 배포만으로 앱 화면도 갱신 | 3 — 스토어 심사·OTA 관리 | 3 |
+| 비용 (15%) | 5 — 앱 스토어 비용 없음 | 3 — 스토어 계정 비용 | 3 |
+| 운영 부담 (10%) | 5 — 웹 배포만으로 갱신, 심사 없음 | 3 — 스토어 심사·OTA 관리 | 3 |
 | 생태계 (5%) | 5 | 5 | 4 |
-| **가중 합계** | **4.65** | 4.05 | 3.6 |
+| **가중 합계** | **4.75** | 3.75 | 3.3 |
 
 ### 3.3 백엔드 기술 선정
 
@@ -366,7 +366,7 @@ graph TB
 | 토큰 | `jose` (JWT 서명·검증) | 5.x | HS256, Supabase JWT 비밀키로 서명 (ADR-003) |
 | 이미지 처리 | `sharp` | 0.33.x | EXIF 제거, WebP 리사이즈 |
 | 메일 | Resend API (초안) | - | 학교 메일 도착 확인 필요 (DEP-001) |
-| 푸시 | Firebase Admin SDK (FCM HTTP v1) | 12.x | iOS는 APNs 키를 Firebase에 등록 |
+| 푸시 | Firebase Admin SDK (FCM HTTP v1) | 12.x | 웹 푸시. 웹 푸시용 공개 키(VAPID)는 Firebase 콘솔에서 발급 |
 | OCR | Google Cloud Vision `TEXT_DETECTION` (초안) | - | 한국어 지원, 월 1,000장 무료 구간. 대안 네이버 CLOVA OCR |
 | 오류 추적 | Sentry (무료 플랜) | - | 개인정보 마스킹 설정 |
 
@@ -398,7 +398,6 @@ graph TB
 |------|-----------|------|
 | 호스팅 | Vercel (Next.js), 함수 리전 서울 `icn1` | GitHub 연동 자동 배포, PR마다 미리보기 URL |
 | DB·저장소·실시간 | Supabase (서울 `ap-northeast-2`) | 개발 프로젝트(무료) / 운영 프로젝트(Pro 권장, DB-Q3 미결) |
-| 앱 빌드 | Capacitor + Xcode / Android Studio | 앱 스토어 개발자 계정 필요 (Apple 연간, Google 1회, SRS 7.3) |
 | CI/CD | GitHub Actions + Vercel | 4.3 |
 | 비밀 정보 저장 | Vercel 환경 변수(암호화), GitHub Actions Secrets, Supabase 대시보드 | 4.5 |
 | 모니터링 | Vercel 로그·Analytics, Sentry, Supabase 대시보드(쿼리·연결) | 6.4 |
@@ -408,8 +407,8 @@ graph TB
 
 | 대안 기술 | 영역 | 불채택 사유 |
 |-----------|------|-------------|
-| React Native (Expo) | 앱 | 품질은 가장 좋지만 화면 코드가 Next.js와 따로 생겨 두 벌이 된다. 수업 일정·1인 개발에 부담 (ADR-001 대안) |
-| PWA 단독 | 앱 | iOS는 홈 화면에 추가해야 웹 푸시를 받을 수 있어 관심 매물 알림(FR-021)·채팅 알림이 약해진다. 앱 스토어 검색 노출도 없다 |
+| React Native (Expo) | 앱 | 품질은 가장 좋지만 화면 코드가 Next.js와 따로 생겨 두 벌이 되고, 앱 스토어 계정 비용·심사가 필요하다. 수업 일정·1인 개발에 부담 (ADR-001 대안) |
+| Capacitor 앱 포장 | 앱 | 지금은 보류. 앱 스토어 비용(Apple 연간, Google 1회)과 심사가 필요하다. iOS 웹 푸시 도달률이 낮으면 나중에 검토 (ADR-001) |
 | Supabase Auth의 카카오 로그인 | 인증 | 카카오에서 이메일·프로필 동의 항목을 요구하는 구성이 기본이라 "카카오 회원번호만 받는다"(FR-001-2) 원칙과 맞추기 어렵고, 인증 단계(UNVERIFIED~MEMBER) 판단을 우리 DB가 해야 한다. 자체 토큰 발급으로 대체 (ADR-003) |
 | Socket.IO 자체 서버 | 채팅 | Vercel 함수는 장시간 연결을 유지할 수 없어 별도 서버가 필요하다. Supabase Realtime으로 대체 (ADR-004) |
 | Elasticsearch / OpenSearch | 검색 | 데이터가 작아 과하다. `pg_trgm`으로 충분 |
@@ -446,11 +445,6 @@ graph TB
         SBPROD[("운영 프로젝트<br/>(서울, Pro 권장)")]
     end
 
-    subgraph "앱 스토어"
-        IOS["App Store<br/>(TestFlight)"]
-        AND["Google Play<br/>(내부 테스트)"]
-    end
-
     DEV -->|push / PR| GH
     GH --> CI
     GH -->|PR| PREV
@@ -458,11 +452,9 @@ graph TB
     PREV --> SBDEV
     PROD --> SBPROD
     MIG --> SBPROD
-    PROD -.->|앱 웹뷰가 불러옴| IOS
-    PROD -.->|앱 웹뷰가 불러옴| AND
 ```
 
-앱(Capacitor)은 운영 웹 주소의 화면을 불러온다(`server.url`). 화면·API 변경은 웹 배포만으로 앱에도 반영되고, 앱 스토어 재심사는 Capacitor 설정·플러그인·아이콘이 바뀔 때만 필요하다.
+사용자는 운영 웹 주소로 접속하거나 홈 화면에 추가해 쓴다. 화면·API 변경은 웹 배포만으로 모두에게 바로 반영되고, 앱 스토어 심사는 없다. 서비스 워커는 배포 때 새 버전으로 바뀐다.
 
 ### 4.2 환경 구성
 
@@ -523,14 +515,13 @@ CI 안의 프로덕션 빌드는 Vercel이 맡는다. 에이전트 세션에서�
 | Preview 배포 | PR push마다 Vercel 자동 | 개발 Supabase에 연결 |
 | Production 배포 | `main` 머지 시 Vercel 자동 | 문제가 있으면 Vercel에서 이전 배포로 즉시 되돌림 |
 | DB 마이그레이션 | GitHub Actions `workflow_dispatch` + 환경 보호 규칙(승인자 이유나) | 하위 호환 순서(확장 → 전환 → 정리, DB 설계서 5.5)로 앱 배포와 독립 |
-| 앱 빌드 | 수동 (Capacitor sync → Xcode·Android Studio) | 플러그인·설정 변경 시만 |
 
 ### 4.4 인프라 코드(IaC) 전략
 
 | 항목 | 내용 |
 |------|------|
 | IaC 도구 | 해당 없음 (Terraform 미사용). 관리형 서비스 2개(Vercel, Supabase)라 대시보드 설정 + 저장소 설정 파일로 충분 |
-| 코드로 관리하는 것 | `supabase/config.toml`, `supabase/migrations/*.sql`(스키마·RLS·pg_cron), `vercel.json`(리전·헤더), `capacitor.config.ts`, `.github/workflows/*.yml` |
+| 코드로 관리하는 것 | `supabase/config.toml`, `supabase/migrations/*.sql`(스키마·RLS·pg_cron), `vercel.json`(리전·헤더), `public/manifest.webmanifest`, `.github/workflows/*.yml` |
 | 대시보드에서만 관리하는 것 | 환경 변수 값(비밀), 도메인, 카카오·Firebase·OCR 콘솔 설정 |
 
 #### IaC 디렉토리 구조
@@ -557,7 +548,7 @@ sookbak-sookbak/
 │   │   ├── modules/           # 도메인 서비스 (2.5)
 │   │   └── infra/             # 외부 연동 클라이언트
 │   └── lib/                   # 공용 (Zod 스키마, 가격 표기, 토큰)
-├── capacitor.config.ts
+├── public/                # manifest.webmanifest, sw.js(서비스 워커), 아이콘
 ├── vercel.json
 ├── .env.example               # 이름만, 값 없음 (커밋)
 ├── .env.local                 # 실제 값 (커밋 금지, .gitignore)
@@ -640,7 +631,7 @@ sookbak-sookbak/
 
 | ADR 번호 | 제목 | 상태 | 결정일 | 관련 요구사항 |
 |----------|------|------|--------|--------------|
-| ADR-001 | 앱 구현 방식: Next.js 모바일 웹앱 + Capacitor 앱 포장 | **제안됨 (사용자 확인 대기, DEC-010)** | 2026-11-26 | NFR-010, NFR-003, FR-021 |
+| ADR-001 | 앱 구현 방식: Next.js 모바일 웹앱(PWA), 앱 포장은 나중에 | **승인됨 (이유나, DEC-010)** | 2026-11-26 | NFR-010, NFR-003, FR-021 |
 | ADR-002 | 백엔드: Next.js Route Handlers + Supabase | 제안됨 | 2026-11-26 | NFR-002, NFR-008, SRS 7.3 |
 | ADR-003 | 인증: 카카오 OAuth + 숙박숙박 자체 토큰 (Supabase Auth 미사용) | 제안됨 | 2026-11-26 | FR-001, FR-002, NFR-004 |
 | ADR-004 | 실시간 채팅: 전송은 API, 수신은 Supabase Realtime 구독 | 제안됨 | 2026-11-26 | FR-015, NFR-001, NFR-003 |
@@ -651,35 +642,35 @@ sookbak-sookbak/
 
 ### 5.3 ADR 상세
 
-#### ADR-001: 앱 구현 방식 — Next.js 모바일 웹앱 + Capacitor 앱 포장
+#### ADR-001: 앱 구현 방식 — Next.js 모바일 웹앱(PWA)
 
 | 항목 | 내용 |
 |------|------|
-| **상태** | 제안됨 (이유나 확인 대기, DEC-010) |
+| **상태** | 승인됨 (이유나 2026-11-26, DEC-010) |
 | **결정일** | 2026-11-26 |
 | **결정자** | 이유나 (기획 책임자) / Claude (제안) |
 
 **컨텍스트**
 
-SRS는 앱 구현 방식을 SAD에서 정하도록 남겼다 (DEC-010). 결정 기준은 앱 푸시 안정성(NFR-003, FR-021 관심 매물 알림 1분), 앱 스토어 배포, 저장소 AGENTS.md(Next.js) 정합성이다. 모바일 우선(2026-11-26 결정)이며 데스크톱 최적화는 제외(EX-011)다.
+SRS는 앱 구현 방식을 SAD에서 정하도록 남겼다 (DEC-010). 결정 기준은 푸시 알림(NFR-003, FR-021 관심 매물 알림 1분), 개발 속도, 비용, 저장소 AGENTS.md(Next.js) 정합성이다. 이유나는 처음에 웹앱 + 앱 포장을 골랐다가, 앱 스토어 비용(Apple 연간, Google 1회)을 듣고 "일단 지금은 웹앱으로" 만들기로 정했다. 모바일 우선(2026-11-26 결정)이며 데스크톱 최적화는 제외(EX-011)다.
 
 **결정**
 
-Next.js(App Router)로 모바일 우선 웹앱을 만들고, 같은 화면을 Capacitor로 감싸 iOS·Android 앱으로 배포한다. 앱 푸시는 Capacitor 푸시 플러그인 + FCM(iOS는 APNs 경유)으로 받는다. 웹(브라우저)으로도 같은 화면을 쓸 수 있어 공유 링크를 앱 설치 없이 열 수 있다.
+Next.js(App Router)로 모바일 우선 웹앱을 만들고 PWA(홈 화면 추가)로 쓴다. 푸시는 서비스 워커 + FCM 웹 푸시로 받는다. Android는 브라우저에서 바로, iOS는 16.4 이상에서 홈 화면에 추가한 뒤 받을 수 있으므로, 가입 직후와 관심 조건 저장 직후에 "홈 화면에 추가하면 알림을 받을 수 있어요" 안내를 띄운다(화면 설계서 1.3·S1-b·S5). 앱 스토어 출시는 지금 하지 않고, 나중에 필요하면 같은 화면을 Capacitor로 포장하는 방법을 검토한다.
 
 **근거**
 
 | 대안 | 장점 | 단점 |
 |------|------|------|
-| **Next.js + Capacitor (선택)** | 코드 한 벌, AGENTS.md와 일치, 웹 배포만으로 화면 갱신, 네이티브 푸시 | 웹뷰라 스크롤·전환이 네이티브보다 약간 덜 부드러움. 앱 스토어가 "웹사이트 포장"으로 보고 반려할 위험(푸시·카메라 등 기기 기능으로 완화) |
-| React Native (Expo) | 가장 앱다운 품질, 푸시 안정 | 화면 코드가 Next.js와 따로 생겨 두 벌. 일정 부담 |
-| PWA만 | 가장 단순, 스토어 비용 없음 | iOS는 홈 화면에 추가해야 푸시 가능 → 관심 매물 알림·채팅 알림 도달률 낮음 |
+| **Next.js 웹앱 PWA (선택)** | 가장 단순, 앱 스토어 비용·심사 없음, 코드 한 벌, AGENTS.md와 일치, 공유 링크가 바로 열림 | iOS는 홈 화면에 추가해야 푸시 가능 → 관심 매물·채팅 알림 도달률이 낮을 수 있음 |
+| Next.js + Capacitor 앱 포장 | 앱 스토어 배포, 기기 푸시 | 스토어 계정 비용·심사. 나중에 필요할 때 검토 |
+| React Native (Expo) | 가장 앱다운 품질, 푸시 안정 | 화면 코드가 Next.js와 따로 생겨 두 벌. 스토어 비용·일정 부담 |
 
 **결과**
 
 - 긍정적: 하나의 TypeScript 저장소로 화면·API·관리자 화면을 만든다. 공유 링크가 웹에서 바로 열린다.
-- 부정적: 카카오톡 앱으로 로그인 넘기기(앱 간 전환)는 웹뷰에서 동작을 확인해야 한다(상세 설계에서 시험). 앱 스토어 심사 대응이 필요하다.
-- 후속 조치: 사용자가 React Native나 PWA를 고르면 2.4 컨테이너, 3.2 프론트엔드, 화면 설계서 1.3을 바꾼다. API·DB 설계는 어느 쪽이든 그대로 쓴다.
+- 부정적: iOS 사용자는 홈 화면에 추가하기 전까지 푸시를 못 받는다. 인앱 알림 목록(S12)과 하단 탭 배지로 보완한다.
+- 후속 조치: 알림 도달률이 낮으면 Capacitor 앱 포장을 다시 검토한다. 그때도 API·DB 설계와 화면 코드는 그대로 쓰고, 2.4 컨테이너·3.2 프론트엔드·4.1 배포만 바뀐다.
 
 #### ADR-002: 백엔드 — Next.js Route Handlers + Supabase
 
@@ -711,7 +702,7 @@ Next.js(App Router)로 모바일 우선 웹앱을 만들고, 같은 화면을 Ca
 1. 앱이 카카오 인가 화면으로 보내고(state 값 포함), 돌아온 인가 코드를 `POST /api/v1/auth/kakao`로 서버에 보낸다.
 2. 서버가 카카오에 토큰을 교환하고 `/v2/user/me`로 회원번호만 확인한 뒤 카카오 토큰은 버린다.
 3. 서버가 Access Token(JWT, 1시간, HS256, Supabase JWT 비밀키로 서명, `sub` = 회원 ID, `role` = `authenticated`)과 Refresh Token(무작위 256비트, DB에는 해시만, 마지막 이용 + 30일, 쓸 때마다 교체)을 발급한다.
-4. Refresh Token은 HttpOnly·Secure·SameSite=Lax 쿠키(`/api/v1/auth` 경로 한정)로 내려 웹·앱 웹뷰 모두 화면 코드가 읽을 수 없게 한다. Access Token은 메모리에만 둔다.
+4. Refresh Token은 HttpOnly·Secure·SameSite=Lax 쿠키(`/api/v1/auth` 경로 한정)로 내려 화면 코드가 읽을 수 없게 한다. Access Token은 메모리에만 둔다.
 5. 인증 단계·정지 여부는 토큰에 의존하지 않고 요청마다 DB의 현재 `users.status`로 판단한다 (승인·정지가 즉시 반영되도록).
 
 **근거**: Supabase Auth의 카카오 연동은 이메일 동의 항목 요구 등 "회원번호만" 원칙과 맞추기 어렵다. Access Token을 Supabase JWT 비밀키로 서명하면 같은 토큰으로 Realtime 구독 시 RLS(`auth.uid()`)가 동작한다.
@@ -783,7 +774,7 @@ Next.js(App Router)로 모바일 우선 웹앱을 만들고, 같은 화면을 Ca
 ```mermaid
 sequenceDiagram
     actor U as 사용자
-    participant A as 앱 (웹뷰)
+    participant A as 웹앱
     participant K as 카카오
     participant S as 숙박숙박 API
     participant D as DB
@@ -978,7 +969,7 @@ sequenceDiagram
 | 시스템 컨텍스트 | 2.3 | 사용자·외부 시스템과의 경계 |
 | 컨테이너 | 2.4 | 앱·Next.js·Supabase 구성 |
 | 컴포넌트 | 2.5 | Next.js 내부 도메인 모듈 |
-| 배포 | 4.1 | GitHub → Vercel·Supabase·앱 스토어 |
+| 배포 | 4.1 | GitHub → Vercel·Supabase |
 | CI/CD | 4.3 | PR 검사와 배포 단계 |
 | 인증 시퀀스 | 6.2 | 카카오 OAuth + 자체 토큰 |
 
@@ -986,10 +977,10 @@ sequenceDiagram
 
 | 계층 | 기술 |
 |------|------|
-| 앱 | Next.js 15 (App Router) 모바일 웹앱 + Capacitor 6 (iOS·Android), Tailwind CSS(DESIGN.md 토큰), TanStack Query, React Hook Form + Zod |
+| 앱 | Next.js 15 (App Router) 모바일 웹앱(PWA, 서비스 워커·웹 푸시), Tailwind CSS(DESIGN.md 토큰), TanStack Query, React Hook Form + Zod |
 | API | Next.js Route Handlers (Node.js 20, Vercel 서울), Zod, jose, sharp |
 | 데이터 | Supabase PostgreSQL 15 (서울), Storage, Realtime, pg_cron |
-| 외부 연동 | 카카오 로그인·로컬 API·지도 SDK, 우편번호 검색 화면, FCM(APNs), Resend(초안), Google Cloud Vision OCR(초안) |
+| 외부 연동 | 카카오 로그인·로컬 API·지도 SDK, 우편번호 검색 화면, FCM 웹 푸시, Resend(초안), Google Cloud Vision OCR(초안) |
 | 운영 | GitHub Actions(lint·test·gitleaks), Vercel, Sentry, 업타임 모니터 |
 
 ### C. 요구사항 대응 요약 (NFR → 설계)
@@ -1012,10 +1003,10 @@ sequenceDiagram
 
 | ID | 내용 | 담당 | 제안 |
 |----|------|------|------|
-| DEC-010 | 앱 구현 방식 (ADR-001) | 이유나 | Next.js 웹앱 + Capacitor (확인 요청 중) |
+| DEC-010 | 앱 구현 방식 (ADR-001) | 이유나 | 결정됨: Next.js 웹앱(PWA). 앱 포장은 나중에 검토 |
 | SAD-Q1 | 서비스 도메인 | 이유나 | 출시 전 결정 |
 | SAD-Q2 | 메일 발송 서비스가 `@sookmyung.ac.kr`로 잘 도착하는지 (DEP-001) | 구현 초기 | 실제 학교 메일로 시험. 스팸함으로 가면 발신 도메인 인증(SPF·DKIM) 설정 |
-| SAD-Q3 | 카카오톡 앱 간편 로그인이 Capacitor 웹뷰에서 동작하는지 | 상세 설계 | 안 되면 카카오 계정 로그인 화면(웹)으로 진행, 또는 카카오 SDK 네이티브 플러그인 검토 |
+| SAD-Q3 | 홈 화면 추가 PWA에서 카카오 로그인 후 앱으로 잘 돌아오는지 (iOS 독립 실행 모드) | 상세 설계 | 실제 기기로 시험. 안 되면 로그인만 브라우저 창에서 진행 |
 | SAD-Q4 | OCR 업체·비용 | 구현 초기 | Google Cloud Vision 무료 구간으로 시작 |
 | DB-Q3 | 운영 Supabase Pro 플랜 (백업) | 이유나 | 실제 사용자 받기 전 전환 |
 
